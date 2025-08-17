@@ -142,8 +142,9 @@ void solver() {
     }
     discriminant_solve(&a, &b, &c, &type_of_answer, &x1, &x2);
 
-    print_answer(&type_of_answer, &x1);
+    print_answer(&type_of_answer, &x1, &x2);
 }
+
 int main(void) {
     solver();
 }
