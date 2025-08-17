@@ -6,6 +6,11 @@
 constexpr int EMAX = (DBL_MAX_EXP - 1);                  // 1023 
 constexpr int EMIN = (DBL_MIN_EXP - DBL_MANT_DIG);       // -1074 
 
+void normalize_pow2(double *a, double *b, double *c);
+bool input(double *a, double *b, double *c);
+bool is_quadratic(double *a, double *b, double *c);
+void discriminant_solution(double *a1, double *b1, double *c1);
+void solver();
 
 void normalize_pow2(double *a, double *b, double *c) {
     if (*a == 0.0 && *b == 0.0 && *c == 0.0) return;
@@ -50,32 +55,34 @@ void normalize_pow2(double *a, double *b, double *c) {
     *c = scalbn(*c, t);
 }
 
-
-
-
-int main(void) {
-    double a, b, c;
-
+bool input(double *a, double *b, double *c) {
     printf("Введите коэффициенты:\n");
-    if (scanf("%lf %lf %lf", &a, &b, &c) != 3 || !isfinite(a) || !isfinite(b) || !isfinite(c)) {
+    if (scanf("%lf %lf %lf", a, b, c) != 3 || !isfinite(*a) || !isfinite(*b) || !isfinite(*c)) {
         printf("Неверный ввод\n");
-        return 1;
+        return false;
     }
+    return true;
+}
 
-    normalize_pow2(&a, &b, &c);
-
-    if (a == 0.0) {
-        if (b == 0.0) {
-            if (c == 0.0) printf("x - любое\n");
+bool is_quadratic(double *a, double *b, double *c) {
+    if (*a == 0.0) {
+        if (*b == 0.0) {
+            if (*c == 0.0) printf("x - любое\n");
             else printf("Корней нет\n");
-            return 0;
+            return false;
         } else {
-            double x = -c / b;
+            double x = -(*c) / (*b);
             printf("Единственный корень: %.17g\n", x);
-            return 0;
+            return false;
         }
     }
+    return true;
+}
 
+void discriminant_solution(double *a1, double *b1, double *c1) {
+    double a = *a1;
+    double b = *b1;
+    double c = *c1;
     double D = b * b - 4.0 * a * c;
 
     double tolD = DBL_EPSILON * (fabs(b) * fabs(b) + 4.0 * fabs(a) * fabs(c));
@@ -96,6 +103,19 @@ int main(void) {
     } else {
         printf("Корней нет\n");
     }
-    return 0;
 }
 
+void solver() {
+    double a, b, c;
+    
+    if(!input(&a, &b, &c)) return ;
+
+    normalize_pow2(&a, &b, &c);
+
+    if(!is_quadratic(&a, &b, &c)) return ;
+
+    discriminant_solution(&a, &b, &c);
+}
+int main(void) {
+    solver();
+}
