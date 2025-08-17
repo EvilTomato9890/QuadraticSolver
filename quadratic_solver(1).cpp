@@ -80,7 +80,7 @@ bool linear_solve(double a, double b, double c, int *type_of_answer, double *x1)
     return false;
 }
 
-void print_answer(int type_of_answer, double x1 = NULL, double x2 = NULL) {
+void print_answer(int type_of_answer, double x1, double x2) {
     switch (type_of_answer) {
     case -1:
         printf("x - любое\n");
@@ -134,7 +134,7 @@ void solver() {
     double x1 = 0.0, x2 = 0.0;
 
     if(linear_solve(a, b, c, &type_of_answer, &x1)) {
-        print_answer(type_of_answer, x1);
+        print_answer(type_of_answer, x1, x2);
         return ;
     }
     discriminant_solve(a, b, c, &type_of_answer, &x1, &x2);
@@ -145,3 +145,4 @@ void solver() {
 int main(void) {
     solver();
 }
+
