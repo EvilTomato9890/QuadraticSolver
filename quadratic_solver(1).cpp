@@ -68,7 +68,6 @@ void normalize_pow2(double *a, double *b, double *c) {
     *c = scalbn(*c, t);
 }
 
-
 bool input(double *a, double *b, double *c) {
     printf("Введите коэффициенты:\n");
     if (scanf("%lf %lf %lf", a, b, c) != 3 || !isfinite(*a) || !isfinite(*b) || !isfinite(*c)) {
@@ -156,5 +155,11 @@ void solver() {
 }
 
 int main(void) {
-    solver();
+    printf("Если хотите завершить программу - нажмите e\nЕсли хотите решить следующее уравнение - нажмите n\n");
+    char flag = 'n';
+    while (flag == 'n') {
+        solver();
+        printf("Следующее?\n");
+        scanf(" %c", &flag);
+    }
 }
