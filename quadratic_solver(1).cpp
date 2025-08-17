@@ -3,9 +3,9 @@
 #include <math.h>
 #include <float.h>
 
-constexpr int EMAX = (DBL_MAX_EXP - 1);                  // 1023 
-constexpr int EMIN = (DBL_MIN_EXP - DBL_MANT_DIG);       // -1074 
-constexpr int INF_SOLUTIONS = -1;
+const int EMAX = (DBL_MAX_EXP - 1);                  // 1023 
+const int EMIN = (DBL_MIN_EXP - DBL_MANT_DIG);       // -1074 
+const int INF_SOLUTIONS = -1;
 void normalize_pow2(double *a, double *b, double *c);
 bool input(double *a, double *b, double *c);
 bool linear_solve(double a, double b, double c, int *type_of_answer, double *x1);
