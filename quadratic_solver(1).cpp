@@ -5,7 +5,7 @@
 
 constexpr int EMAX = (DBL_MAX_EXP - 1);                  // 1023 
 constexpr int EMIN = (DBL_MIN_EXP - DBL_MANT_DIG);       // -1074 
-
+constexpr int INF_SOLUTIONS = -1;
 void normalize_pow2(double *a, double *b, double *c);
 bool input(double *a, double *b, double *c);
 bool linear_solve(double a, double b, double c, int *type_of_answer, double *x1);
@@ -87,7 +87,7 @@ void discard_line() {
 bool linear_solve(double a, double b, double c, int *type_of_answer, double *x1) {
     if (cmp_to_zero(a) == 0) {
         if (cmp_to_zero(b) == 0) {
-            if (cmp_to_zero(c) == 0) *type_of_answer = -1;
+            if (cmp_to_zero(c) == 0) *type_of_answer = INF_SOLUTIONS;
             else *type_of_answer = 0;
             return true;
         } else {
@@ -101,7 +101,7 @@ bool linear_solve(double a, double b, double c, int *type_of_answer, double *x1)
 
 void print_answer(int type_of_answer, double x1, double x2) {
     switch (type_of_answer) {
-    case -1:
+    case INF_SOLUTIONS:
         printf("x - любое\n");
         return ;
     case 0: 
@@ -153,7 +153,7 @@ void solver() {
 
     normalize_pow2(&a, &b, &c);
 
-    int type_of_answer = -1;
+    int type_of_answer = INF_SOLUTIONS;
     double x1 = 0.0, x2 = 0.0;
 
     
