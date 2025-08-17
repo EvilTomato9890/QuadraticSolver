@@ -12,17 +12,35 @@ bool linear_solve(double a, double b, double c, int *type_of_answer, double *x1)
 void equation_solve(double a1, double b1, double c1, int *type_of_answer, double *x1, double *x2);
 void print_answer(int type_of_answer, double x1, double x2);
 void solver();
-bool is_zero(double a);
+bool cmp_to_zero(double a, int type);
 
 
-bool is_zero(double a) {
-    return fabs(a) < DBL_EPSILON;
+bool cmp_to_zero(double a, int type) {
+    switch (type)
+    {
+    case 0:
+        return fabs(a) < DBL_EPSILON;
+        break;
+    case 1: 
+        return fabs(a) > DBL_EPSILON;
+        break;
+    case 2:
+        return a > DBL_EPSILON;
+        break;
+    case 3:
+        return a < -DBL_EPSILON;
+        break;
+    default:
+        printf("Wrong type of cmp");
+        return false;
+        break;
+    }
 }
 
 
 
 void normalize_pow2(double *a, double *b, double *c) {
-    if (is_zero_by_memcmp(*a) && is_zero_by_memcmp(*b) && is_zero_by_memcmp(*c)) return;
+    if (*a != 0.0 && *b != 0.0 && *c != 0.0) return;
 
     int ea = (*a != 0) ? ilogb(*a) : 0;
     int eb = (*b != 0) ? ilogb(*b) : 0;
@@ -75,9 +93,9 @@ bool input(double *a, double *b, double *c) {
 }
 
 bool linear_solve(double a, double b, double c, int *type_of_answer, double *x1) {
-    if (is_zero(a)) {
-        if (is_zero(b)) {
-            if (is_zero(c)) *type_of_answer = -1;
+    if (cmp_to_zero(a, 0)) {
+        if (cmp_to_zero(b, 0)) {
+            if (cmp_to_zero(c, 0)) *type_of_answer = -1;
             else *type_of_answer = 0;
             return true;
         } else {
@@ -119,7 +137,7 @@ void equation_solve(double a, double b, double c, int *type_of_answer, double *x
 
     if (D > DBL_EPSILON) {
         double temp = -0.5 * (b + sqrt(D)); 
-        if (is_zero(temp)) {
+        if (cmp_to_zero(temp, 0)) {
             *x1 = (-0.5 * b) / a;   
             *type_of_answer = 1;
         } else {
@@ -127,7 +145,7 @@ void equation_solve(double a, double b, double c, int *type_of_answer, double *x
             *x2 = c / temp;
             *type_of_answer = 2;
         }
-    } else if (is_zero(D)) {
+    } else if (cmp_to_zero(D, 2)) {
         *x1 = (-0.5 * b) / a;   
         *type_of_answer = 1;
     } else {
