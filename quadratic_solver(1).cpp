@@ -8,9 +8,9 @@ constexpr int EMIN = (DBL_MIN_EXP - DBL_MANT_DIG);       // -1074
 
 void normalize_pow2(double *a, double *b, double *c);
 bool input(double *a, double *b, double *c);
-bool linear_solve(double *a, double *b, double *c, int *type_of_answer, double *x1);
-void discriminant_solve(double *a1, double *b1, double *c1, int *type_of_answer, double *x1, double *x2);
-void print_answer(int *type_of_answer, double *x1, double *x2);
+bool linear_solve(double a, double b, double c, int *type_of_answer, double *x1);
+void discriminant_solve(double a1, double b1, double c1, int *type_of_answer, double *x1, double *x2);
+void print_answer(int type_of_answer, double x1, double x2);
 void solver();
  
 void normalize_pow2(double *a, double *b, double *c) {
@@ -65,14 +65,14 @@ bool input(double *a, double *b, double *c) {
     return true;
 }
 
-bool linear_solve(double *a, double *b, double *c, int *type_of_answer, double *x1) {
-    if (*a == 0.0) {
-        if (*b == 0.0) {
-            if (*c == 0.0) *type_of_answer = -1;
+bool linear_solve(double a, double b, double c, int *type_of_answer, double *x1) {
+    if (a == 0.0) {
+        if (b == 0.0) {
+            if (c == 0.0) *type_of_answer = -1;
             else *type_of_answer = 0;
             return true;
         } else {
-            *x1 = -(*c) / (*b);
+            *x1 = - c / b;
             *type_of_answer = 1;
             return true;
         }
@@ -80,8 +80,8 @@ bool linear_solve(double *a, double *b, double *c, int *type_of_answer, double *
     return false;
 }
 
-void print_answer(int *type_of_answer, double *x1 = nullptr, double *x2 = nullptr) {
-    switch (*type_of_answer) {
+void print_answer(int type_of_answer, double x1 = NULL, double x2 = NULL) {
+    switch (type_of_answer) {
     case -1:
         printf("x - любое\n");
         return ;
@@ -89,10 +89,10 @@ void print_answer(int *type_of_answer, double *x1 = nullptr, double *x2 = nullpt
         printf("Корней нет\n");
         return ;
     case 1:
-        printf("Единственный корень: %.17g\n", *x1);
+        printf("Единственный корень: %.17g\n", x1);
         return ;
     case 2:
-        printf("Корня два: x1 = %.17g, x2 = %.17g\n", *x1, *x2);
+        printf("Корня два: x1 = %.17g, x2 = %.17g\n", x1, x2);
         return ;
     default:
         printf("Wrong Type");
@@ -100,10 +100,7 @@ void print_answer(int *type_of_answer, double *x1 = nullptr, double *x2 = nullpt
     }
 }
 
-void discriminant_solve(double *a1, double *b1, double *c1, int *type_of_answer, double *x1, double *x2) {
-    double a = *a1;
-    double b = *b1;
-    double c = *c1;
+void discriminant_solve(double a, double b, double c, int *type_of_answer, double *x1, double *x2) {
     double D = b * b - 4.0 * a * c;
 
     double tolD = DBL_EPSILON * (fabs(b) * fabs(b) + 4.0 * fabs(a) * fabs(c));
@@ -127,7 +124,7 @@ void discriminant_solve(double *a1, double *b1, double *c1, int *type_of_answer,
 }
 
 void solver() {
-    double a = 0.0, b = 0.0, c =0.0;
+    double a = 0.0, b = 0.0, c = 0.0;
     
     if(!input(&a, &b, &c)) return ;
 
@@ -136,13 +133,13 @@ void solver() {
     int type_of_answer = -1;
     double x1 = 0.0, x2 = 0.0;
 
-    if(linear_solve(&a, &b, &c, &type_of_answer, &x1)) {
-        print_answer(&type_of_answer, &x1);
+    if(linear_solve(a, b, c, &type_of_answer, &x1)) {
+        print_answer(type_of_answer, x1);
         return ;
     }
-    discriminant_solve(&a, &b, &c, &type_of_answer, &x1, &x2);
+    discriminant_solve(a, b, c, &type_of_answer, &x1, &x2);
 
-    print_answer(&type_of_answer, &x1, &x2);
+    print_answer(type_of_answer, x1, x2);
 }
 
 int main(void) {
