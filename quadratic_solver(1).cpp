@@ -13,7 +13,7 @@ void equation_solve(double a1, double b1, double c1, int *type_of_answer, double
 void print_answer(int type_of_answer, double x1, double x2);
 void solver();
 int cmp_to_zero(double a);
-
+void discard_line();
 
 int cmp_to_zero(double a) {
     if (fabs(a) < DBL_EPSILON) {
@@ -72,9 +72,16 @@ bool input(double *a, double *b, double *c) {
     printf("Введите коэффициенты:\n");
     if (scanf("%lf %lf %lf", a, b, c) != 3 || !isfinite(*a) || !isfinite(*b) || !isfinite(*c)) {
         printf("Неверный ввод\n");
+        discard_line();
         return false;
     }
+    discard_line();
     return true;
+}
+
+void discard_line() {
+    int ch;
+    while ((ch = getchar()) != '\n' && ch != EOF) { }
 }
 
 bool linear_solve(double a, double b, double c, int *type_of_answer, double *x1) {
@@ -155,7 +162,7 @@ void solver() {
 }
 
 int main(void) {
-    printf("Если хотите завершить программу - нажмите e\nЕсли хотите решить следующее уравнение - нажмите n\n");
+    printf("Если хотите решить следующее уравнение - нажмите n\n");
     char flag = 'n';
     while (flag == 'n') {
         solver();
