@@ -8,10 +8,11 @@ constexpr int EMIN = (DBL_MIN_EXP - DBL_MANT_DIG);       // -1074
 
 void normalize_pow2(double *a, double *b, double *c);
 bool input(double *a, double *b, double *c);
-bool is_quadratic(double *a, double *b, double *c);
-void discriminant_solution(double *a1, double *b1, double *c1);
+bool linear_solve(double *a, double *b, double *c, int *type_of_answer, double *x1);
+void discriminant_solve(double *a1, double *b1, double *c1, int *type_of_answer, double *x1, double *x2);
+void print_answer(int *type_of_answer, double *x1, double *x2);
 void solver();
-
+ 
 void normalize_pow2(double *a, double *b, double *c) {
     if (*a == 0.0 && *b == 0.0 && *c == 0.0) return;
 
@@ -64,22 +65,42 @@ bool input(double *a, double *b, double *c) {
     return true;
 }
 
-bool is_quadratic(double *a, double *b, double *c) {
+bool linear_solve(double *a, double *b, double *c, int *type_of_answer, double *x1) {
     if (*a == 0.0) {
         if (*b == 0.0) {
-            if (*c == 0.0) printf("x - любое\n");
-            else printf("Корней нет\n");
-            return false;
+            if (*c == 0.0) *type_of_answer = -1;
+            else *type_of_answer = 0;
+            return true;
         } else {
-            double x = -(*c) / (*b);
-            printf("Единственный корень: %.17g\n", x);
-            return false;
+            *x1 = -(*c) / (*b);
+            *type_of_answer = 1;
+            return true;
         }
     }
-    return true;
+    return false;
 }
 
-void discriminant_solution(double *a1, double *b1, double *c1) {
+void print_answer(int *type_of_answer, double *x1 = nullptr, double *x2 = nullptr) {
+    switch (*type_of_answer) {
+    case -1:
+        printf("x - любое\n");
+        return ;
+    case 0: 
+        printf("Корней нет\n");
+        return ;
+    case 1:
+        printf("Единственный корень: %.17g\n", *x1);
+        return ;
+    case 2:
+        printf("Корня два: x1 = %.17g, x2 = %.17g\n", *x1, *x2);
+        return ;
+    default:
+        printf("Wrong Type");
+        return ;
+    }
+}
+
+void discriminant_solve(double *a1, double *b1, double *c1, int *type_of_answer, double *x1, double *x2) {
     double a = *a1;
     double b = *b1;
     double c = *c1;
@@ -90,31 +111,38 @@ void discriminant_solution(double *a1, double *b1, double *c1) {
     if (D > tolD) {
         double temp = -0.5 * (b + sqrt(D)); 
         if (temp == 0.0) {
-            double x = (-0.5 * b) / a;   
-            printf("Единственный корень: %.17g\n", x);
+            *x1 = (-0.5 * b) / a;   
+            *type_of_answer = 1;
         } else {
-            double x1 = temp / a;
-            double x2 = c / temp;
-            printf("Корня два: x1 = %.17g, x2 = %.17g\n", x1, x2);
+            *x1 = temp / a;
+            *x2 = c / temp;
+            *type_of_answer = 2;
         }
     } else if (fabs(D) < tolD) {
-        double x = (-0.5 * b) / a;   
-        printf("Единственный корень: %.17g\n", x);
+        *x1 = (-0.5 * b) / a;   
+        *type_of_answer = 1;
     } else {
-        printf("Корней нет\n");
+        *type_of_answer = 0;
     }
 }
 
 void solver() {
-    double a, b, c;
+    double a = 0.0, b = 0.0, c =0.0;
     
     if(!input(&a, &b, &c)) return ;
 
     normalize_pow2(&a, &b, &c);
 
-    if(!is_quadratic(&a, &b, &c)) return ;
+    int type_of_answer = -1;
+    double x1 = 0.0, x2 = 0.0;
 
-    discriminant_solution(&a, &b, &c);
+    if(linear_solve(&a, &b, &c, &type_of_answer, &x1)) {
+        print_answer(&type_of_answer, &x1);
+        return ;
+    }
+    discriminant_solve(&a, &b, &c, &type_of_answer, &x1, &x2);
+
+    print_answer(&type_of_answer, &x1);
 }
 int main(void) {
     solver();
