@@ -26,7 +26,7 @@ int cmp_to_zero(double a) {
 }
 
 void normalize_pow2(double *a, double *b, double *c) {
-    if (*a != 0.0 && *b != 0.0 && *c != 0.0) return;
+    if (*a == 0.0 && *b == 0.0 && *c == 0.0) return;
 
     int ea = (*a != 0.0) ? ilogb(*a) : 0;
     int eb = (*b != 0.0) ? ilogb(*b) : 0;
@@ -130,8 +130,9 @@ void equation_solve(double a, double b, double c, int *type_of_answer, double *x
     if (cmp_to_zero(D) > 0) {
         double temp = -0.5 * (b + sqrt(D)); 
         if (cmp_to_zero(temp) == 0) {
-            *x1 = (-0.5 * b) / a;   
-            *type_of_answer = 1;
+            *x1 =  - b / a;   
+            *x2 = 0;
+            *type_of_answer = 2;
         } else {
             *x1 = temp / a;
             *x2 = c / temp;
