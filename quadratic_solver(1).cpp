@@ -9,7 +9,7 @@ constexpr int EMIN = (DBL_MIN_EXP - DBL_MANT_DIG);       // -1074
 void normalize_pow2(double *a, double *b, double *c);
 bool input(double *a, double *b, double *c);
 bool linear_solve(double a, double b, double c, int *type_of_answer, double *x1);
-void discriminant_solve(double a1, double b1, double c1, int *type_of_answer, double *x1, double *x2);
+void equation_solve(double a1, double b1, double c1, int *type_of_answer, double *x1, double *x2);
 void print_answer(int type_of_answer, double x1, double x2);
 void solver();
  
@@ -76,7 +76,7 @@ bool linear_solve(double a, double b, double c, int *type_of_answer, double *x1)
             *type_of_answer = 1;
             return true;
         }
-    }
+    } 
     return false;
 }
 
@@ -100,7 +100,12 @@ void print_answer(int type_of_answer, double x1, double x2) {
     }
 }
 
-void discriminant_solve(double a, double b, double c, int *type_of_answer, double *x1, double *x2) {
+void equation_solve(double a, double b, double c, int *type_of_answer, double *x1, double *x2) {
+    
+    if(linear_solve(a, b, c, type_of_answer, x1)) {
+        return ;
+    }
+
     double D = b * b - 4.0 * a * c;
 
     double tolD = DBL_EPSILON * (fabs(b) * fabs(b) + 4.0 * fabs(a) * fabs(c));
@@ -133,11 +138,8 @@ void solver() {
     int type_of_answer = -1;
     double x1 = 0.0, x2 = 0.0;
 
-    if(linear_solve(a, b, c, &type_of_answer, &x1)) {
-        print_answer(type_of_answer, x1, x2);
-        return ;
-    }
-    discriminant_solve(a, b, c, &type_of_answer, &x1, &x2);
+    
+    equation_solve(a, b, c, &type_of_answer, &x1, &x2);
 
     print_answer(type_of_answer, x1, x2);
 }
@@ -145,4 +147,3 @@ void solver() {
 int main(void) {
     solver();
 }
-
