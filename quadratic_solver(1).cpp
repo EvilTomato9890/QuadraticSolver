@@ -13,36 +13,32 @@ void equation_solve(double a1, double b1, double c1, int *type_of_answer, double
 void print_answer(int type_of_answer, double x1, double x2);
 void solver();
 bool is_zero(double a);
-bool is_zero_by_memcmp(double a);
 
 
 bool is_zero(double a) {
     return fabs(a) < DBL_EPSILON;
 }
 
-bool is_zero_by_memcmp(double a) {
-    return a == 0.0;
-}
 
 
 void normalize_pow2(double *a, double *b, double *c) {
     if (is_zero_by_memcmp(*a) && is_zero_by_memcmp(*b) && is_zero_by_memcmp(*c)) return;
 
-    int ea = (!is_zero_by_memcmp(*a)) ? ilogb(*a) : 0;
-    int eb = (!is_zero_by_memcmp(*b)) ? ilogb(*b) : 0;
-    int ec = (!is_zero_by_memcmp(*c)) ? ilogb(*c) : 0;
+    int ea = (*a != 0) ? ilogb(*a) : 0;
+    int eb = (*b != 0) ? ilogb(*b) : 0;
+    int ec = (*c != 0) ? ilogb(*c) : 0;
 
 
     int t_min = EMIN; 
     int t_max = EMAX; 
 
 
-    if (!is_zero_by_memcmp(*b)) {
+    if (*b != 0) {
         int n  = EMAX - 2 * eb;
         int hi = (n >= 0) ? (n / 2) : ((n - 1) / 2); 
         if (hi < t_max) t_max = hi;
     }
-    if (!is_zero_by_memcmp(*a) && !is_zero_by_memcmp(*c)) {
+    if (*a != 0 && *c != 0) {
 
         int n  = EMAX - 2 - ea - ec;
         int hi = (n >= 0) ? (n / 2) : ((n - 1) / 2); 
@@ -50,12 +46,12 @@ void normalize_pow2(double *a, double *b, double *c) {
     }
 
 
-    if (!is_zero_by_memcmp(*b)) {
+    if (*b != 0) {
         int n  = EMIN - 2 * eb;
         int lo = (n >= 0) ? ((n + 1) / 2) : (n / 2);
         if (lo > t_min) t_min = lo;
     }
-    if (!is_zero_by_memcmp(*a) && !is_zero_by_memcmp(*c)) {
+    if (*a != 0 && *c != 0) {
         int n  = EMIN - 2 - ea - ec;
         int lo = (n >= 0) ? ((n + 1) / 2) : (n / 2);   
         if (lo > t_min) t_min = lo;
