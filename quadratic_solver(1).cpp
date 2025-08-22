@@ -2,7 +2,8 @@
 #include <stdio.h>
 #include <math.h>
 #include <float.h>
-
+#include <assert.h>
+#include <string.h>
 const int EMAX = (DBL_MAX_EXP - 1);                  // 1023 
 const int EMIN = (DBL_MIN_EXP - DBL_MANT_DIG);       // -1074 
 
@@ -12,20 +13,18 @@ enum type_of_answer {
     ONE_SOLUTION,
     TWO_SOLUTIONS
 };
-
-
 #define hard_assert(test, message) \
     if(!(test)) { \
-        fprintf(stderr, "%s\nERROR WAS OCCURED IN %i LINE\n", message, __LINE__); \
+        fprintf(stderr, "%s\nERROR WAS OCCURED IN %s FILE IN %i LINE FROM %s\n", message,__FILE__, __LINE__, __PRETTY_FUNCTION__); \
         abort(); \
     } 
 
 #define soft_assert(test, message) \
     if(!(test)) { \
-        printf("%s\nERROR WAS OCCURED IN %i LINE\n", message, __LINE__); \
+        printf("%s\nERROR WAS OCCURED IN %s FILE IN %i LINE FROM %s\n", message,__FILE__, __LINE__, __PRETTY_FUNCTION__); \
     }
 
-
+//сделать цветной вывод и stringify
 bool is_buffer_empty();
 void normalize_pow2(double *a, double *b, double *c);
 bool input(double *a, double *b, double *c);
@@ -35,9 +34,11 @@ void print_answer(type_of_answer nAnswer, double x1, double x2);
 void solver();
 int cmp_to_zero(double a);
 bool discard_line_and_check();
+bool is_correct(double a);
+
 
 int cmp_to_zero(const double a) {
-    soft_assert(a != NAN, "error x1 is null");
+    soft_assert(is_correct(a), "error x1 is null");
     if (fabs(a) < DBL_EPSILON) {
         return 0;
     }
@@ -46,6 +47,13 @@ int cmp_to_zero(const double a) {
     }
     return -1;
 }
+
+
+bool is_correct(const double a) {
+    if (a == INFINITY || a == -INFINITY || a != a) return false;
+    return true;
+}
+
 
 void normalize_pow2(double *a, double *b, double *c) {
 
@@ -97,9 +105,9 @@ void normalize_pow2(double *a, double *b, double *c) {
 }
 
 bool input(double *a, double *b, double *c) {
-    soft_assert(a != nullptr, "a is NAN");
-    soft_assert(b != nullptr, "b is NAN");
-    soft_assert(c != nullptr, "c is NAN");
+    hard_assert(a != nullptr, "a is nullptr");
+    hard_assert(b != nullptr, "b is nullptr");
+    hard_assert(c != nullptr, "c is nullptr");
 
     printf("Введите коэффициенты:\n");
     if (scanf("%lf %lf %lf", a, b, c) != 3 || 
@@ -126,9 +134,11 @@ bool /*try_*/linear_solve(const double a, const double b, const double c,
                           type_of_answer *nAnswer, 
                           double* x1) {
 
-    soft_assert(a != NAN, "a is NAN");
-    soft_assert(b != NAN, "b is NAN");
-    soft_assert(c != NAN, "c is NAN");
+    soft_assert(is_correct(a), "a is NAN"); // isnan
+    soft_assert(is_correct(b), "b is NAN"); // float a = NAN; print("%d", a == a);
+    soft_assert(is_correct(c), "c is NAN"); // svoy isnan, isinf
+
+    // Provali assert i sdelay svoy assert takim je krutim
 
     if (cmp_to_zero(a) == 0) {
         if (cmp_to_zero(b) == 0) {
@@ -146,9 +156,9 @@ bool /*try_*/linear_solve(const double a, const double b, const double c,
 
 void print_answer(type_of_answer nAnswer, const double x1, const double x2) {
 
-    soft_assert(x1 != NAN, "x1 is NAN");
-    soft_assert(x2 != NAN, "x2 is NAN");
-    
+    soft_assert(is_correct(x1), "x1 is NAN");
+    soft_assert(is_correct(x2), "x2 is NAN");
+
     switch (nAnswer) {
     case INF_SOLUTIONS:
         printf("x - любое\n");
@@ -171,7 +181,6 @@ void print_answer(type_of_answer nAnswer, const double x1, const double x2) {
 void equation_solve(const double a, const double b, const double c, 
                     type_of_answer *nAnswer, 
                     double *x1, double *x2) {
-
     hard_assert(x1 != nullptr, "x1 is nullptr");
     hard_assert(x2 != nullptr, "x2 is nullptr");
     hard_assert(nAnswer != nullptr, "nAnswer is nullptr");
@@ -217,8 +226,12 @@ void solver() {
     print_answer(nAnswer, x1, x2);
 }
 
-int main(void) {
+int main(int args, char *argv[]) {
+    printf("ВЫВОД: %s\n", argv[0]);
     printf("Если хотите решить следующее уравнение - нажмите y\n");
+    soft_assert(false && 1234, "FUN");
+    assert(false && 1234);
+    
     char flag = 'y';
     while (flag == 'y') {
         solver();
