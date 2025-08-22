@@ -167,13 +167,13 @@ void print_answer(type_of_answer nAnswer, const double x1, const double x2) {
     case INF_SOLUTIONS:
         printf("x - любое\n");
         return ;
-    case 0: 
+    case ZERO_SOLUTIONS: 
         printf("Корней нет\n");
         return ;
-    case 1:
+    case ONE_SOLUTION:
         printf("Единственный корень: %.17g\n", x1);
         return ;
-    case 2:
+    case TWO_SOLUTIONS:
         printf("Корня два: x1 = %.17g, x2 = %.17g\n", x1, x2);
         return ;
     default:
