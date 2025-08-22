@@ -5,15 +5,36 @@
 
 const int EMAX = (DBL_MAX_EXP - 1);                  // 1023 
 const int EMIN = (DBL_MIN_EXP - DBL_MANT_DIG);       // -1074 
-const int INF_SOLUTIONS = -1;
+
+enum type_of_answer {
+    INF_SOLUTIONS = -1, 
+    ZERO_SOLUTIONS,
+    ONE_SOLUTION,
+    TWO_SOLUTIONS
+};
+
+
+#define hard_assert(test, message) \
+    if(!(test)) { \
+        fprintf(stderr, "%s\nERROR WAS OCCURED IN %i LINE\n", message, __LINE__); \
+        abort(); \
+    } 
+
+#define soft_assert(test, message) \
+    if(!(test)) { \
+        printf("%s\nERROR WAS OCCURED IN %i LINE\n", message, __LINE__); \
+    }
+
+
+bool is_buffer_empty();
 void normalize_pow2(double *a, double *b, double *c);
 bool input(double *a, double *b, double *c);
-bool linear_solve(double a, double b, double c, int *type_of_answer, double *x1);
-void equation_solve(double a1, double b1, double c1, int *type_of_answer, double *x1, double *x2);
-void print_answer(int type_of_answer, double x1, double x2);
+bool linear_solve(double a, double b, double c, type_of_answer *nAnswer, double *x1);
+void equation_solve(double a1, double b1, double c1, type_of_answer *nAnswer, double *x1, double *x2);
+void print_answer(type_of_answer nAnswer, double x1, double x2);
 void solver();
 int cmp_to_zero(double a);
-void discard_line();
+bool discard_line_and_check();
 
 int cmp_to_zero(double a) {
     if (fabs(a) < DBL_EPSILON) {
@@ -70,37 +91,43 @@ void normalize_pow2(double *a, double *b, double *c) {
 
 bool input(double *a, double *b, double *c) {
     printf("Введите коэффициенты:\n");
-    if (scanf("%lf %lf %lf", a, b, c) != 3 || !isfinite(*a) || !isfinite(*b) || !isfinite(*c)) {
+    if (scanf("%lf %lf %lf", a, b, c) != 3 || 
+        !isfinite(*a) || !isfinite(*b) || !isfinite(*c) || !discard_line_and_check()) {
         printf("Неверный ввод\n");
-        discard_line();
         return false;
     }
-    discard_line();
     return true;
 }
 
-void discard_line() {
-    int ch;
-    while ((ch = getchar()) != '\n' && ch != EOF) { }
+
+
+bool discard_line_and_check() {
+    int ch = 0;
+    bool flag = 0;
+    while ((ch = getchar()) != '\n' && ch != EOF) {
+        if (ch != ' ' && ch != '\t') flag = 1;
+    }
+    if (flag) return false;
+    return true;
 }
 
-bool linear_solve(double a, double b, double c, int *type_of_answer, double *x1) {
+bool /*try_*/linear_solve(double a, double b, double c, type_of_answer *nAnswer, double *x1) {
     if (cmp_to_zero(a) == 0) {
         if (cmp_to_zero(b) == 0) {
-            if (cmp_to_zero(c) == 0) *type_of_answer = INF_SOLUTIONS;
-            else *type_of_answer = 0;
+            if (cmp_to_zero(c) == 0) *nAnswer = INF_SOLUTIONS;
+            else *nAnswer = ZERO_SOLUTIONS;
             return true;
         } else {
             *x1 = - c / b;
-            *type_of_answer = 1;
+            *nAnswer = ONE_SOLUTION;
             return true;
         }
     } 
     return false;
 }
 
-void print_answer(int type_of_answer, double x1, double x2) {
-    switch (type_of_answer) {
+void print_answer(type_of_answer nAnswer, double x1, double x2) {
+    switch (nAnswer) {
     case INF_SOLUTIONS:
         printf("x - любое\n");
         return ;
@@ -119,9 +146,18 @@ void print_answer(int type_of_answer, double x1, double x2) {
     }
 }
 
-void equation_solve(double a, double b, double c, int *type_of_answer, double *x1, double *x2) {
+/*#define max(x, y) (x) > (y) ? (x) : (y)
+
+max(a + b, b++);
+*/
+void equation_solve(double a, double b, double c, type_of_answer *nAnswer, double *x1, double *x2) {
     
-    if(linear_solve(a, b, c, type_of_answer, x1)) {
+    hard_assert(x1 != nullptr, "FUN");
+    hard_assert(x2 != nullptr, "FUN");
+    hard_assert(nAnswer != nullptr, "FUN");
+    soft_assert(a != NAN, "error x1 is null");
+
+    if(linear_solve(a, b, c, nAnswer, x1)) {
         return ;
     }
 
@@ -132,17 +168,17 @@ void equation_solve(double a, double b, double c, int *type_of_answer, double *x
         if (cmp_to_zero(temp) == 0) {
             *x1 =  - b / a;   
             *x2 = 0;
-            *type_of_answer = 2;
+            *nAnswer = TWO_SOLUTIONS;
         } else {
             *x1 = temp / a;
             *x2 = c / temp;
-            *type_of_answer = 2;
+            *nAnswer = TWO_SOLUTIONS;
         }
     } else if (cmp_to_zero(D) == 0) {
         *x1 = (-0.5 * b) / a;   
-        *type_of_answer = 1;
+        *nAnswer = ONE_SOLUTION;
     } else {
-        *type_of_answer = 0;
+        *nAnswer = ZERO_SOLUTIONS;
     }
 }
 
@@ -153,19 +189,18 @@ void solver() {
 
     normalize_pow2(&a, &b, &c);
 
-    int type_of_answer = INF_SOLUTIONS;
+    type_of_answer nAnswer = INF_SOLUTIONS;
     double x1 = 0.0, x2 = 0.0;
 
-    
-    equation_solve(a, b, c, &type_of_answer, &x1, &x2);
+    equation_solve(a, b, c, &nAnswer, &x1, &x2);
 
-    print_answer(type_of_answer, x1, x2);
+    print_answer(nAnswer, x1, x2);
 }
 
 int main(void) {
-    printf("Если хотите решить следующее уравнение - нажмите n\n");
-    char flag = 'n';
-    while (flag == 'n') {
+    printf("Если хотите решить следующее уравнение - нажмите y\n");
+    char flag = 'y';
+    while (flag == 'y') {
         solver();
         printf("Следующее?\n");
         scanf(" %c", &flag);
