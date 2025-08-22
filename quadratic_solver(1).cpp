@@ -36,7 +36,8 @@ void solver();
 int cmp_to_zero(double a);
 bool discard_line_and_check();
 
-int cmp_to_zero(double a) {
+int cmp_to_zero(const double a) {
+    soft_assert(a != NAN, "error x1 is null");
     if (fabs(a) < DBL_EPSILON) {
         return 0;
     }
@@ -47,6 +48,12 @@ int cmp_to_zero(double a) {
 }
 
 void normalize_pow2(double *a, double *b, double *c) {
+
+    hard_assert(a != nullptr, "a is nullptr");
+    hard_assert(b != nullptr, "b is nullptr");
+    hard_assert(c != nullptr, "c is nullptr");
+
+
     if (*a == 0.0 && *b == 0.0 && *c == 0.0) return;
 
     int ea = (*a != 0.0) ? ilogb(*a) : 0;
@@ -90,6 +97,10 @@ void normalize_pow2(double *a, double *b, double *c) {
 }
 
 bool input(double *a, double *b, double *c) {
+    soft_assert(a != nullptr, "a is NAN");
+    soft_assert(b != nullptr, "b is NAN");
+    soft_assert(c != nullptr, "c is NAN");
+
     printf("Введите коэффициенты:\n");
     if (scanf("%lf %lf %lf", a, b, c) != 3 || 
         !isfinite(*a) || !isfinite(*b) || !isfinite(*c) || !discard_line_and_check()) {
@@ -111,7 +122,14 @@ bool discard_line_and_check() {
     return true;
 }
 
-bool /*try_*/linear_solve(double a, double b, double c, type_of_answer *nAnswer, double *x1) {
+bool /*try_*/linear_solve(const double a, const double b, const double c, 
+                          type_of_answer *nAnswer, 
+                          double* x1) {
+
+    soft_assert(a != NAN, "a is NAN");
+    soft_assert(b != NAN, "b is NAN");
+    soft_assert(c != NAN, "c is NAN");
+
     if (cmp_to_zero(a) == 0) {
         if (cmp_to_zero(b) == 0) {
             if (cmp_to_zero(c) == 0) *nAnswer = INF_SOLUTIONS;
@@ -126,7 +144,11 @@ bool /*try_*/linear_solve(double a, double b, double c, type_of_answer *nAnswer,
     return false;
 }
 
-void print_answer(type_of_answer nAnswer, double x1, double x2) {
+void print_answer(type_of_answer nAnswer, const double x1, const double x2) {
+
+    soft_assert(x1 != NAN, "x1 is NAN");
+    soft_assert(x2 != NAN, "x2 is NAN");
+    
     switch (nAnswer) {
     case INF_SOLUTIONS:
         printf("x - любое\n");
@@ -146,16 +168,14 @@ void print_answer(type_of_answer nAnswer, double x1, double x2) {
     }
 }
 
-/*#define max(x, y) (x) > (y) ? (x) : (y)
+void equation_solve(const double a, const double b, const double c, 
+                    type_of_answer *nAnswer, 
+                    double *x1, double *x2) {
 
-max(a + b, b++);
-*/
-void equation_solve(double a, double b, double c, type_of_answer *nAnswer, double *x1, double *x2) {
-    
-    hard_assert(x1 != nullptr, "FUN");
-    hard_assert(x2 != nullptr, "FUN");
-    hard_assert(nAnswer != nullptr, "FUN");
-    soft_assert(a != NAN, "error x1 is null");
+    hard_assert(x1 != nullptr, "x1 is nullptr");
+    hard_assert(x2 != nullptr, "x2 is nullptr");
+    hard_assert(nAnswer != nullptr, "nAnswer is nullptr");
+
 
     if(linear_solve(a, b, c, nAnswer, x1)) {
         return ;
