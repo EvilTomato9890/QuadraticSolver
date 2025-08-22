@@ -13,18 +13,23 @@ enum type_of_answer {
     ONE_SOLUTION,
     TWO_SOLUTIONS
 };
+
+#define stringify(a) #a
 #define hard_assert(test, message) \
     if(!(test)) { \
-        fprintf(stderr, "%s\nERROR WAS OCCURED IN %s FILE IN %i LINE FROM %s\n", message,__FILE__, __LINE__, __PRETTY_FUNCTION__); \
+        fprintf(stderr, "%s%s\nERROR WAS OCCURED IN %s IN %i LINE FROM %s BY %s%s\n", RED, message,__FILE__, __LINE__, __PRETTY_FUNCTION__, stringify(test), RESET); \
         abort(); \
     } 
 
 #define soft_assert(test, message) \
     if(!(test)) { \
-        printf("%s\nERROR WAS OCCURED IN %s FILE IN %i LINE FROM %s\n", message,__FILE__, __LINE__, __PRETTY_FUNCTION__); \
-    }
+        printf("%s%s\nERROR WAS OCCURED IN %s IN %i LINE FROM %s BY %s%s\n", RED, message,__FILE__, __LINE__, __PRETTY_FUNCTION__, stringify(test), RESET); \
+    }  
 
-//сделать цветной вывод и stringify
+#define RED "\033[1;31m"
+#define RESET "\033[0m"
+
+
 bool is_buffer_empty();
 void normalize_pow2(double *a, double *b, double *c);
 bool input(double *a, double *b, double *c);
@@ -134,11 +139,10 @@ bool /*try_*/linear_solve(const double a, const double b, const double c,
                           type_of_answer *nAnswer, 
                           double* x1) {
 
-    soft_assert(is_correct(a), "a is NAN"); // isnan
-    soft_assert(is_correct(b), "b is NAN"); // float a = NAN; print("%d", a == a);
-    soft_assert(is_correct(c), "c is NAN"); // svoy isnan, isinf
+    soft_assert(is_correct(a), "a is NAN");
+    soft_assert(is_correct(b), "b is NAN"); 
+    soft_assert(is_correct(c), "c is NAN"); 
 
-    // Provali assert i sdelay svoy assert takim je krutim
 
     if (cmp_to_zero(a) == 0) {
         if (cmp_to_zero(b) == 0) {
