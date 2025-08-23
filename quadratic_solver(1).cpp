@@ -77,7 +77,21 @@ enum type_of_answer {
         } while(0)
 #endif
 
-//soft_assert_functional(discard_line_and_check_from_file(ftell(curr_file)) == false, "blabla", return false);
+
+#ifdef NDEBUG
+    #define soft_assert_function(...) (void)0
+#else 
+    #define soft_assert_functional(test, message, command) \
+        do { \
+            if(!(test)) { \
+                printf(RED "%s\nERROR WAS OCCURED IN %s IN %i LINE FROM %s BY %s" RESET "\n", \
+                    message,__FILE__, __LINE__, __PRETTY_FUNCTION__, stringify(test)); \
+            }  \
+            command; \
+        } while(0)
+#endif
+
+
 
 //! @brief Строка, придающая выводу красный цвет.
 #define RED "\033[1;31m"
@@ -85,24 +99,63 @@ enum type_of_answer {
 //! @brief Строка, очищающая цвет вывода.   
 #define RESET "\033[0m"
 
-
+bool is_answer_correct(const type_of_answer nAnswer, const type_of_answer correct_nAnswer, 
+                       const double a, const double b, const double c,
+                       const double correct_a, const double correct_b, const double correct_c,
+                       const double x1, const double x2,
+                       const double correct_x1, const double correct_x2);
 void normalize_pow2(double *a, double *b, double *c);
 bool input_from_term(double *a, double *b, double *c);
-bool input_from_file(double *a, double *b, double *c, type_of_answer *nAnswer, double *x1, double *x2, const char* file_name);
-bool discard_line_and_check_from_file(const long pos, const char* file_name);
+bool input_from_file(double *a, double *b, double *c, type_of_answer *nAnswer, double *x1, double *x2, FILE *curr_file);
 bool try_linear_solve(double a, double b, double c, type_of_answer *nAnswer, double *x1);
 void equation_solve(double a1, double b1, double c1, type_of_answer *nAnswer, double *x1, double *x2);
 void print_answer(type_of_answer nAnswer, double x1, double x2);
 void solver();
+void test(const double a, const double b, const double c, 
+          const int correct_nAnswer_int, 
+          const double correct_x1, const double correct_x2,
+          const long int test_number);
 int cmp_to_zero(double a);
 bool discard_line_and_check_from_term();
-bool discard_line_and_check_from_file();
-bool is_correct(double a);
+bool discard_line_and_check_from_file(FILE *curr_file) ;
+bool is_float_correct(double a);
+void tester();
 
 
 
 
 
+/**
+ * @brief Функция вывода.
+ * @param [in] nAnswer Количество корней уравнения.
+ * @param [in] x1 Первый корень уравнения.
+ * @param [in] x2 Второй корень уравнения.
+ * 
+ * Функция производит вывод корней уравнения
+*/
+void print_answer(type_of_answer nAnswer, const double x1, const double x2) {
+
+    soft_assert(is_float_correct(x1), "x1 is NAN");
+    soft_assert(is_float_correct(x2), "x2 is NAN");
+
+    switch (nAnswer) {
+    case SOLUTIONS_INF:
+        printf("x - любое\n");
+        return ;
+    case SOLUTIONS_ZERO: 
+        printf("Корней нет\n");
+        return ;
+    case SOLUTIONS_ONE:
+        printf("Единственный корень: %.17g\n", x1);
+        return ;
+    case SOLUTIONS_TWO:
+        printf("Корня два: x1 = %.17g, x2 = %.17g\n", x1, x2);
+        return ;
+    default:
+        soft_assert(false, "Wront type"); 
+        return ;
+    }
+}
 
 /**
  * @brief Функция сравнения с нулем для действительных чисел.
@@ -114,7 +167,7 @@ bool is_correct(double a);
  * @note Использует DBL_EPSILON в качестве абсолютного eps
 */
 int cmp_to_zero(const double a) {
-    soft_assert(is_correct(a), "error x1 is null");
+    soft_assert(is_float_correct(a), "error a is null");
     if (fabs(a) < DBL_EPSILON) {
         return 0;
     }
@@ -124,11 +177,23 @@ int cmp_to_zero(const double a) {
     return -1;
 }
 
+int cmp_for_double(const double a, const double b) {
+    soft_assert(is_float_correct(a), "error a is null");
+    soft_assert(is_float_correct(b), "error b is null");
+    if (fabs(a - b) < DBL_EPSILON) {
+        return 0;
+    }
+    if (a - b > DBL_EPSILON) {
+        return 1;
+    }
+    return -1;
+}
+
 /**
  * @brief Функция проверяющая НЕ является ли число NAN или INF.
  * @param [in] a Действительное число, которое нужно проверить.
 */
-bool is_correct(const double a) {
+bool is_float_correct(const double a) {
     if (a == INFINITY || a == -INFINITY || a != a) return false;
     return true;
 }
@@ -183,9 +248,20 @@ void normalize_pow2(double *a, double *b, double *c) {
     *c = scalbn(*c, t);
 }
 
-//Вод названия файла из консоли 
+bool is_answer_correct(const type_of_answer nAnswer, const type_of_answer correct_nAnswer, 
+                       const double a, const double b, const double c,
+                       const double x1, const double x2,
+                       const double correct_x1, const double correct_x2) {
+    if (cmp_for_double(correct_nAnswer, nAnswer) == 0 and 
+       ((cmp_for_double(correct_x1, x1) == 0 and cmp_for_double(correct_x2, x2) == 0) or
+        (cmp_for_double(correct_x1, x2) == 0 and cmp_for_double(correct_x2, x1) == 0))) {
+        return true;
+    }
+    return false;
+}
 
 
+//---------------------------------------------------------------------------
 /**
  * @brief Функция, очищающая буфер ввода консоли и проверяющая его "пустоту".
  * @param [out] a Первый коэффицент.
@@ -196,12 +272,12 @@ void normalize_pow2(double *a, double *b, double *c) {
 */
 bool discard_line_and_check_from_term() {
     int ch = 0;
-    bool flag = 0; // better name
+    bool is_float_correct = true; 
     while ((ch = getchar()) != '\n' && ch != EOF) {
-        if (ch != ' ' && ch != '\t') flag = 1;
+        if (ch != ' ' && ch != '\t') is_float_correct = false;
     }
-    if (flag) return false;
-    return true;
+    if (!is_float_correct) return false;
+    return true; 
 }
 
 /**
@@ -212,22 +288,20 @@ bool discard_line_and_check_from_term() {
  * 
  * @return Возвращает есть ли в буфере что=либо кроме пробельных символов
 */
-bool discard_line_and_check_from_file(const long pos, const char* file_name) {
+bool discard_line_and_check_from_file(FILE *curr_file) {
     int ch = 0;
     bool flag = 0;
 
-    FILE *curr_file = fopen(file_name, "r");
 //Большие буквы или нижние подчеркивания
     hard_assert(curr_file != nullptr, "File doesn`t found");
 
-    fseek(curr_file, pos, SEEK_SET);
     while ((ch = getc(curr_file)) != '\n' && ch != EOF) {
         if (ch != ' ' && ch != '\t') flag = 1; // K&R priloJILenie B (is...)
     }
     if (flag) return false;
     return true;
 }
-
+//---------------------------------------------------------------------------
 
 /**
  * @brief Функция, производящая ввод и проверку коэфицентов квадратного уравнения из консоли.
@@ -265,12 +339,11 @@ bool input_from_term(double *a, double *b, double *c) {
 bool input_from_file(double *a, double *b, double *c, 
                      type_of_answer *nAnswer,
                      double *x1, double *x2,
-                     const char* file_name) {
+                     FILE *curr_file) {
     hard_assert(a != nullptr, "a is nullptr");
     hard_assert(b != nullptr, "b is nullptr");
     hard_assert(c != nullptr, "c is nullptr");
 
-    FILE *curr_file = fopen(file_name, "r"); 
 
     hard_assert(curr_file != nullptr, "File doesn`t found");
 
@@ -285,38 +358,38 @@ bool input_from_file(double *a, double *b, double *c,
 
     switch(*nAnswer) {
         case SOLUTIONS_ZERO:
-            if (!discard_line_and_check_from_file(ftell(curr_file), file)) {
+            if (!discard_line_and_check_from_file(curr_file)) {
                 printf("Неверный ввод\n");
                 return false;
-            } // TODO: soft_assert_functional(discard_line_and_check_from_file(ftell(curr_file), file), "Неверна", return false);
+            }
             break;
         case SOLUTIONS_ONE:
             if (fscanf(curr_file, "%lf", x1) != 1 || 
-                !isfinite(*x1) || !discard_line_and_check_from_file(ftell(curr_file), file)) {
+                !isfinite(*x1) || !discard_line_and_check_from_file(curr_file)) {
                 printf("Неверный ввод\n");
                 return false;
             }
             break;
         case SOLUTIONS_TWO:
             if (fscanf(curr_file, "%lf %lf", x1, x2) != 2 || 
-                !isfinite(*x1) || !isfinite(*x2) || !discard_line_and_check_from_file(ftell(curr_file), file)) {
+                !isfinite(*x1) || !isfinite(*x2) || !discard_line_and_check_from_file(curr_file)) {
                 printf("Неверный ввод\n");
                 return false;
             }
             break;
         case SOLUTIONS_INF:
-            if (!discard_line_and_check_from_file(ftell(curr_file), file)) {
+            if (!discard_line_and_check_from_file(curr_file)) {
                 printf("Неверный ввод\n");
                 return false;
             }
             break;
         default:
-            soft_assert(false, "Something wront with input from file");
+            soft_assert_functional(false, "Something wrong with input from file", return false);
+            break;
     }
     return true;
 }
-
-
+//---------------------------------------------------------------------------
 
 /**
  * @brief Функция решающая линейное уравнение, если оно таковым является.
@@ -333,9 +406,9 @@ bool try_linear_solve(const double a, const double b, const double c,
                           type_of_answer *nAnswer, 
                           double* x1) {
 
-    soft_assert(is_correct(a), "a is NAN");
-    soft_assert(is_correct(b), "b is NAN"); 
-    soft_assert(is_correct(c), "c is NAN"); 
+    soft_assert(is_float_correct(a), "a is NAN");
+    soft_assert(is_float_correct(b), "b is NAN"); 
+    soft_assert(is_float_correct(c), "c is NAN"); 
 
 
     if (cmp_to_zero(a) == 0) {
@@ -350,39 +423,6 @@ bool try_linear_solve(const double a, const double b, const double c,
         }
     } 
     return false;
-}
-
-
-/**
- * @brief Функция вывода.
- * @param [in] nAnswer Количество корней уравнения.
- * @param [in] x1 Первый корень уравнения.
- * @param [in] x2 Второй корень уравнения.
- * 
- * Функция производит вывод корней уравнения
-*/
-void print_answer(type_of_answer nAnswer, const double x1, const double x2) {
-
-    soft_assert(is_correct(x1), "x1 is NAN");
-    soft_assert(is_correct(x2), "x2 is NAN");
-
-    switch (nAnswer) {
-    case SOLUTIONS_INF:
-        printf("x - любое\n");
-        return ;
-    case SOLUTIONS_ZERO: 
-        printf("Корней нет\n");
-        return ;
-    case SOLUTIONS_ONE:
-        printf("Единственный корень: %.17g\n", x1);
-        return ;
-    case SOLUTIONS_TWO:
-        printf("Корня два: x1 = %.17g, x2 = %.17g\n", x1, x2);
-        return ;
-    default:
-        printf("Wrong Type");
-        return ;
-    }
 }
 
 /**
@@ -428,16 +468,52 @@ void equation_solve(const double a, const double b, const double c,
     }
 }
 
+void tester(FILE* file_pointer, const long int test_number) {
 
-
-
-void tester() {
-    
     double a = 0, b = 0, c = 0;
-    type_of_answer nAnswer = SOLUTIONS_ZERO;
+    type_of_answer correct_nAnswer = SOLUTIONS_ZERO;
+    double correct_x1 = 0, correct_x2 = 0;
+
+    input_from_file(&a, &b, &c, &correct_nAnswer, &correct_x1, &correct_x2, file_pointer);
+
+
     double x1 = 0, x2 = 0;
-    input_from_file(&a, &b, &c, &nAnswer, &x1, &x2, file);
-    printf("%i %lf %lf", nAnswer, x1, x2);
+    type_of_answer nAnswer = SOLUTIONS_INF;
+
+    equation_solve(a, b, c, &nAnswer, &x1, &x2);
+
+    if(!is_answer_correct(nAnswer, correct_nAnswer, a, b, c, x1, x2, correct_x1, correct_x2)) {
+        printf("Test %ld: WA a = %.17g, b = %.17g, c = %.17g\n", test_number, a, b, c);
+    } else {
+        printf("Test %ld: OK\n", test_number);
+    }
+}
+
+void test(const double a, const double b, const double c, 
+          const int correct_nAnswer_int, 
+          const double correct_x1, const double correct_x2,
+          const long int test_number) {
+    double x1 = 0, x2 = 0;
+    type_of_answer nAnswer = SOLUTIONS_INF;
+    type_of_answer correct_nAnswer = (type_of_answer)correct_nAnswer_int;
+    equation_solve(a, b, c, &nAnswer, &x1, &x2);
+
+    if(!is_answer_correct(nAnswer, correct_nAnswer, a, b, c, x1, x2, correct_x1, correct_x2)) {
+        printf("Test %ld: WA a = %.17g, b = %.17g, c = %.17g\n", test_number, a, b, c);
+    } else {
+        printf("Test %ld: OK\n", test_number);
+    }
+}
+
+
+void test_all() {
+    test(1.0, 2.0, 1.0, 1, -1.0, 0.0, 1);
+    test(1.0, -5.0, 6.0, 2, 2.0, 3.0, 2);
+    test(1.0, 5.0, 6.0, 2, -2.0, -3.0, 3);
+    test(1.0, 2.0, 5.0, 0, 0.0, 0.0, 4);
+    test(1.0, 0.0, -1.0, 2, -1.0, 1.0, 5);
+    test(0.0, 2.0, 2.0, 1, -1.0, 0.0, 6);
+    test(1.0, 1.0, 0.0, 2, 0.0, -1.0, 7);
 }
 
 
@@ -464,6 +540,25 @@ void solver() {
 }
 
 int main() {
+    printf("Введите имя файла:\n");
+
+    char file_name[100];
+    scanf("%s", file_name);
+
+    FILE *file_pointer = fopen(file_name, "r");
+    hard_assert(file_pointer != nullptr, "File doesn`t found");
+    long num_of_tests = 0;
+    fscanf(file_pointer,"%ld", &num_of_tests);
+
+
+    long int test_number = 1;
+    for(int i = 0; i < num_of_tests; i++) {
+        tester(file_pointer, test_number);
+        test_number++;
+
+    }
+    test_all();
+
     printf("Если хотите решить следующее уравнение - нажмите y\n");
     char flag = 'y';
     while (flag == 'y') {
