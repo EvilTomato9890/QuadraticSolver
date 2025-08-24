@@ -15,7 +15,8 @@ enum type_of_answer {
     SOLUTIONS_INF = -1, ///< Бесконечное число решений
     SOLUTIONS_ZERO, ///< Нет решений
     SOLUTIONS_ONE, ///< Одно решение
-    SOLUTIONS_TWO ///< Два решения
+    SOLUTIONS_TWO, ///< Два решения
+    SOLUTIONS_ENUM_MAX,
 };
 
 /**
@@ -79,7 +80,7 @@ enum type_of_answer {
 
 
 #ifdef NDEBUG
-    #define soft_assert_function(...) (void)0
+    #define soft_assert_functional(...) (void)0
 #else 
     #define soft_assert_functional(test, message, command) \
         do { \
@@ -99,30 +100,29 @@ enum type_of_answer {
 //! @brief Строка, очищающая цвет вывода.   
 #define RESET "\033[0m"
 
-bool is_answer_correct(const type_of_answer nAnswer, const type_of_answer correct_nAnswer, 
-                       const double a, const double b, const double c,
-                       const double correct_a, const double correct_b, const double correct_c,
-                       const double x1, const double x2,
-                       const double correct_x1, const double correct_x2);
-void normalize_pow2(double *a, double *b, double *c);
-bool input_from_term(double *a, double *b, double *c);
-bool input_from_file(double *a, double *b, double *c, type_of_answer *nAnswer, double *x1, double *x2, FILE *curr_file);
-bool try_linear_solve(double a, double b, double c, type_of_answer *nAnswer, double *x1);
-void equation_solve(double a1, double b1, double c1, type_of_answer *nAnswer, double *x1, double *x2);
-void print_answer(type_of_answer nAnswer, double x1, double x2);
+struct equation_info;
+bool is_answer_correct(equation_info eq, equation_info eq_correct);
+void normalize_pow2(equation_info *eq);
+bool input_from_term(equation_info *eq);
+bool input_from_file(equation_info *eq, FILE *curr_file);
+bool try_linear_solve(equation_info *eq);
+void equation_solve(equation_info *eq);
+void print_answer(equation_info eq);
 void solver();
-void test(const double a, const double b, const double c, 
-          const int correct_nAnswer_int, 
-          const double correct_x1, const double correct_x2,
-          const long int test_number);
+void test(equation_info eq, const long int test_number);
 int cmp_to_zero(double a);
 bool discard_line_and_check_from_term();
-bool discard_line_and_check_from_file(FILE *curr_file) ;
+bool discard_line_and_check_from_file(char *curr_file) ;
 bool is_float_correct(double a);
 void tester();
 
 
-
+struct equation_info {
+    double a = 0.0, b = 0.0, c = 0.0;
+    type_of_answer nAnswer = SOLUTIONS_INF;
+    double x1 = 0.0, x2 = 0.0;
+    
+};
 
 
 /**
@@ -133,12 +133,12 @@ void tester();
  * 
  * Функция производит вывод корней уравнения
 */
-void print_answer(type_of_answer nAnswer, const double x1, const double x2) {
+void print_answer(equation_info eq) {
 
-    soft_assert(is_float_correct(x1), "x1 is NAN");
-    soft_assert(is_float_correct(x2), "x2 is NAN");
+    soft_assert(is_float_correct(eq.x1), "x1 is NAN");
+    soft_assert(is_float_correct(eq.x2), "x2 is NAN");
 
-    switch (nAnswer) {
+    switch (eq.nAnswer) {
     case SOLUTIONS_INF:
         printf("x - любое\n");
         return ;
@@ -146,10 +146,10 @@ void print_answer(type_of_answer nAnswer, const double x1, const double x2) {
         printf("Корней нет\n");
         return ;
     case SOLUTIONS_ONE:
-        printf("Единственный корень: %.17g\n", x1);
+        printf("Единственный корень: %.17g\n", eq.x1);
         return ;
     case SOLUTIONS_TWO:
-        printf("Корня два: x1 = %.17g, x2 = %.17g\n", x1, x2);
+        printf("Корня два: x1 = %.17g, x2 = %.17g\n", eq.x1, eq.x2);
         return ;
     default:
         soft_assert(false, "Wront type"); 
@@ -248,13 +248,10 @@ void normalize_pow2(double *a, double *b, double *c) {
     *c = scalbn(*c, t);
 }
 
-bool is_answer_correct(const type_of_answer nAnswer, const type_of_answer correct_nAnswer, 
-                       const double a, const double b, const double c,
-                       const double x1, const double x2,
-                       const double correct_x1, const double correct_x2) {
-    if (cmp_for_double(correct_nAnswer, nAnswer) == 0 and 
-       ((cmp_for_double(correct_x1, x1) == 0 and cmp_for_double(correct_x2, x2) == 0) or
-        (cmp_for_double(correct_x1, x2) == 0 and cmp_for_double(correct_x2, x1) == 0))) {
+bool is_answer_correct(equation_info eq, equation_info eq_correct) {
+    if (cmp_for_double(eq.nAnswer, eq_correct.nAnswer) == 0 and 
+       ((cmp_for_double(eq_correct.x1, eq.x1) == 0 and cmp_for_double(eq_correct.x2, eq.x2) == 0) or
+        (cmp_for_double(eq_correct.x1, eq.x2) == 0 and cmp_for_double(eq_correct.x2, eq.x1) == 0))) {
         return true;
     }
     return false;
@@ -288,18 +285,18 @@ bool discard_line_and_check_from_term() {
  * 
  * @return Возвращает есть ли в буфере что=либо кроме пробельных символов
 */
-bool discard_line_and_check_from_file(FILE *curr_file) {
+bool discard_line_and_check_from_file(char *curr_file) {
     int ch = 0;
     bool flag = 0;
 
 //Большие буквы или нижние подчеркивания
     hard_assert(curr_file != nullptr, "File doesn`t found");
 
-    while ((ch = getc(curr_file)) != '\n' && ch != EOF) {
+    while ((ch = *(curr_file++)) != '\n' && ch != EOF) {
         if (ch != ' ' && ch != '\t') flag = 1; // K&R priloJILenie B (is...)
     }
     if (flag) return false;
-    return true;
+    return true; 
 }
 //---------------------------------------------------------------------------
 
@@ -311,14 +308,12 @@ bool discard_line_and_check_from_file(FILE *curr_file) {
  * 
  * @return Возвращает корректный ли ввод
 */
-bool input_from_term(double *a, double *b, double *c) {
-    hard_assert(a != nullptr, "a is nullptr");
-    hard_assert(b != nullptr, "b is nullptr");
-    hard_assert(c != nullptr, "c is nullptr");
+bool input_from_term(equation_info *eq) {
+    hard_assert(eq != nullptr, "eq is nullptr");
 
     printf("Введите коэффициенты:\n");
-    if (scanf("%lf %lf %lf", a, b, c) != 3 || 
-        !isfinite(*a) || !isfinite(*b) || !isfinite(*c) || !discard_line_and_check_from_term()) {
+    if (scanf("%lf %lf %lf", &eq->a, &eq->b, &eq->c) != 3 || 
+        !isfinite(eq->a) || !isfinite(eq->b) || !isfinite(eq->c) || !discard_line_and_check_from_term()) {
         printf("Неверный ввод\n");
         return false;
     }
@@ -336,27 +331,37 @@ bool input_from_term(double *a, double *b, double *c) {
  * 
  * @return Возвращает корректный ли ввод
 */
-bool input_from_file(double *a, double *b, double *c, 
-                     type_of_answer *nAnswer,
-                     double *x1, double *x2,
-                     FILE *curr_file) {
-    hard_assert(a != nullptr, "a is nullptr");
-    hard_assert(b != nullptr, "b is nullptr");
-    hard_assert(c != nullptr, "c is nullptr");
 
+/*
+bool input_from_file_legacy(equation_info *eq, FILE *curr_file) {
+    hard_assert(eq != nullptr, "eq is nullptr");
 
     hard_assert(curr_file != nullptr, "File doesn`t found");
-
     int nAnswerInt = 0;
-    if (fscanf(curr_file, "%lf %lf %lf %i", a, b, c, &nAnswerInt) != 4 || 
-        !isfinite(*a) || !isfinite(*b) || !isfinite(*c)) {
+    if (fscanf(curr_file, "%lf %lf %lf %i", &eq->a, &eq->b, &eq->c, &nAnswerInt) != 4 || 
+        !isfinite(eq->a) || !isfinite(eq->b) || !isfinite(eq->c)) {
         printf("Неверный ввод\n");
         return false;
     }
 
-    *nAnswer = (type_of_answer)nAnswerInt;
-
-    switch(*nAnswer) {
+    switch(nAnswerInt) {
+        case -1:
+            eq->nAnswer = SOLUTIONS_INF;
+            break;
+        case 0:
+            eq->nAnswer = SOLUTIONS_ZERO;
+            break;
+        case 1:
+            eq->nAnswer = SOLUTIONS_ONE;
+            break;
+        case 2:
+            eq->nAnswer = SOLUTIONS_TWO;
+            break;
+        default:
+            soft_assert_functional(false, "Inccorect nAnswer", return false);
+            break;
+    }
+    switch(eq->nAnswer) {
         case SOLUTIONS_ZERO:
             if (!discard_line_and_check_from_file(curr_file)) {
                 printf("Неверный ввод\n");
@@ -364,15 +369,15 @@ bool input_from_file(double *a, double *b, double *c,
             }
             break;
         case SOLUTIONS_ONE:
-            if (fscanf(curr_file, "%lf", x1) != 1 || 
-                !isfinite(*x1) || !discard_line_and_check_from_file(curr_file)) {
+            if (fscanf(curr_file, "%lf", &eq->x1) != 1 || 
+                !isfinite(eq->x1) || !discard_line_and_check_from_file(curr_file)) {
                 printf("Неверный ввод\n");
                 return false;
             }
             break;
         case SOLUTIONS_TWO:
-            if (fscanf(curr_file, "%lf %lf", x1, x2) != 2 || 
-                !isfinite(*x1) || !isfinite(*x2) || !discard_line_and_check_from_file(curr_file)) {
+            if (fscanf(curr_file, "%lf %lf", &eq->x1, &eq->x2) != 2 || 
+                !isfinite(eq->x1) || !isfinite(eq->x2) || !discard_line_and_check_from_file(curr_file)) {
                 printf("Неверный ввод\n");
                 return false;
             }
@@ -389,6 +394,81 @@ bool input_from_file(double *a, double *b, double *c,
     }
     return true;
 }
+*/
+bool input_from_file(equation_info *eq, FILE *curr_file) {
+    hard_assert(eq != nullptr, "eq is nullptr");
+    hard_assert(curr_file != nullptr, "File doesn`t found");
+
+    char *buffer = 0;
+    fseek (curr_file, 0, SEEK_END);
+    long int length = ftell(curr_file);
+    fseek (curr_file, 0, SEEK_SET);
+    buffer = (char *)malloc (length * sizeof(char));
+    hard_assert(!buffer, "Memory allocation failed ");
+
+    fread(buffer, 1, length, curr_file);
+
+    int nAnswerInt = 0;
+    if (sscanf(buffer, "%lf %lf %lf %i", &eq->a, &eq->b, &eq->c, &nAnswerInt) != 4 || 
+        !isfinite(eq->a) || !isfinite(eq->b) || !isfinite(eq->c)) {
+        printf("Неверный ввод\n");
+        return false;
+    }
+    //Заменить свич на прямой каст
+    switch(nAnswerInt) {
+        case -1:
+            eq->nAnswer = SOLUTIONS_INF;
+            break;
+        case 0:
+            eq->nAnswer = SOLUTIONS_ZERO;
+            break;
+        case 1:
+            eq->nAnswer = SOLUTIONS_ONE;
+            break;
+        case 2:
+            eq->nAnswer = SOLUTIONS_TWO;
+            break;
+        default:
+            soft_assert_functional(false, "Inccorect nAnswer", return false);
+            break;
+    }
+    switch(eq->nAnswer) {
+        case SOLUTIONS_ZERO:
+            if (!discard_line_and_check_from_file(buffer)) {
+                printf("Неверный ввод\n");
+                return false;
+            }
+            break;
+        case SOLUTIONS_ONE:
+            if (fscanf(curr_file, "%lf", &eq->x1) != 1 || 
+                !isfinite(eq->x1) || !discard_line_and_check_from_file(buffer)) {
+                printf("Неверный ввод\n");
+                return false;
+            }
+            break;
+        case SOLUTIONS_TWO:
+            if (fscanf(curr_file, "%lf %lf", &eq->x1, &eq->x2) != 2 || 
+                !isfinite(eq->x1) || !isfinite(eq->x2) || !discard_line_and_check_from_file(buffer)) {
+                printf("Неверный ввод\n");
+                return false;
+            }
+            break;
+        case SOLUTIONS_INF:
+            if (!discard_line_and_check_from_file(buffer)) {
+                printf("Неверный ввод\n");
+                return false;
+            }
+            break;
+        default:
+            soft_assert_functional(false, "Something wrong with input from file", return false);
+            break;
+    }
+    return true;
+
+}
+
+
+
 //---------------------------------------------------------------------------
 
 /**
@@ -402,23 +482,23 @@ bool input_from_file(double *a, double *b, double *c,
  * 
  * @return Возвращает является ли уравнение линейным
 */
-bool try_linear_solve(const double a, const double b, const double c, 
-                          type_of_answer *nAnswer, 
-                          double* x1) {
+bool try_linear_solve(equation_info *eq) {
 
-    soft_assert(is_float_correct(a), "a is NAN");
-    soft_assert(is_float_correct(b), "b is NAN"); 
-    soft_assert(is_float_correct(c), "c is NAN"); 
+    const double a = eq->a, b = eq->b, c = eq->c;
+
+    soft_assert(is_float_correct(eq->a), "a is NAN");
+    soft_assert(is_float_correct(eq->b), "b is NAN"); 
+    soft_assert(is_float_correct(eq->c), "c is NAN"); 
 
 
     if (cmp_to_zero(a) == 0) {
         if (cmp_to_zero(b) == 0) {
-            if (cmp_to_zero(c) == 0) *nAnswer = SOLUTIONS_INF;
-            else *nAnswer = SOLUTIONS_ZERO;
+            if (cmp_to_zero(c) == 0) eq->nAnswer = SOLUTIONS_INF;
+            else eq->nAnswer = SOLUTIONS_ZERO;
             return true;
         } else {
-            *x1 = - c / b;
-            *nAnswer = SOLUTIONS_ONE;
+            eq->x1 = - c / b;
+            eq->nAnswer = SOLUTIONS_ONE;
             return true;
         }
     } 
@@ -435,15 +515,11 @@ bool try_linear_solve(const double a, const double b, const double c,
  * @param [out] x1 Первый корень уравнения
  * @param [out] x2 Второй корень уравнения
 */
-void equation_solve(const double a, const double b, const double c, 
-                    type_of_answer *nAnswer, 
-                    double *x1, double *x2) {
-    hard_assert(x1 != nullptr, "x1 is nullptr");
-    hard_assert(x2 != nullptr, "x2 is nullptr");
-    hard_assert(nAnswer != nullptr, "nAnswer is nullptr");
+void equation_solve(equation_info *eq) {
+    hard_assert(eq != nullptr, "x1 is nullptr");
 
-
-    if(try_linear_solve(a, b, c, nAnswer, x1)) {
+    const double a = eq->a, b = eq->b, c = eq->c;
+    if(try_linear_solve(eq)) {
         return ;
     }
 
@@ -452,54 +528,48 @@ void equation_solve(const double a, const double b, const double c,
     if (cmp_to_zero(D) > 0) {
         double temp = -0.5 * (b + sqrt(D)); 
         if (cmp_to_zero(temp) == 0) {
-            *x1 =  - b / a;   
-            *x2 = 0;
-            *nAnswer = SOLUTIONS_TWO;
+            eq->x1 =  - b / a;   
+            eq->x2 = 0;
+            eq->nAnswer = SOLUTIONS_TWO;
         } else {
-            *x1 = temp / a;
-            *x2 = c / temp;
-            *nAnswer = SOLUTIONS_TWO;
+            eq->x1 = temp / a;
+            eq->x2 = c / temp;
+            eq->nAnswer = SOLUTIONS_TWO;
         }
     } else if (cmp_to_zero(D) == 0) {
-        *x1 = (-0.5 * b) / a;   
-        *nAnswer = SOLUTIONS_ONE;
+        eq->x1 = (-0.5 * b) / a;   
+        eq->nAnswer = SOLUTIONS_ONE;
     } else {
-        *nAnswer = SOLUTIONS_ZERO;
+        eq->nAnswer = SOLUTIONS_ZERO;
     }
 }
 
 void tester(FILE* file_pointer, const long int test_number) {
 
-    double a = 0, b = 0, c = 0;
-    type_of_answer correct_nAnswer = SOLUTIONS_ZERO;
-    double correct_x1 = 0, correct_x2 = 0;
+    equation_info eq_correct;
 
-    input_from_file(&a, &b, &c, &correct_nAnswer, &correct_x1, &correct_x2, file_pointer);
+    input_from_file(&eq_correct, file_pointer);
 
+    equation_info eq;
+    eq.a = eq_correct.a;
+    eq.b = eq_correct.b;
+    eq.c = eq_correct.c;
+    equation_solve(&eq);
 
-    double x1 = 0, x2 = 0;
-    type_of_answer nAnswer = SOLUTIONS_INF;
-
-    equation_solve(a, b, c, &nAnswer, &x1, &x2);
-
-    if(!is_answer_correct(nAnswer, correct_nAnswer, a, b, c, x1, x2, correct_x1, correct_x2)) {
-        printf("Test %ld: WA a = %.17g, b = %.17g, c = %.17g\n", test_number, a, b, c);
+    if(!is_answer_correct(eq, eq_correct)) {
+        printf("Test %ld: WA a = %.17g, b = %.17g, c = %.17g\n", test_number, eq.a, eq.b, eq.c);
     } else {
         printf("Test %ld: OK\n", test_number);
     }
 }
 
-void test(const double a, const double b, const double c, 
-          const int correct_nAnswer_int, 
-          const double correct_x1, const double correct_x2,
+void test(equation_info eq_correct,
           const long int test_number) {
-    double x1 = 0, x2 = 0;
-    type_of_answer nAnswer = SOLUTIONS_INF;
-    type_of_answer correct_nAnswer = (type_of_answer)correct_nAnswer_int;
-    equation_solve(a, b, c, &nAnswer, &x1, &x2);
+    equation_info eq = {eq_correct.a, eq_correct.b, eq_correct.c};
+    equation_solve(&eq);
 
-    if(!is_answer_correct(nAnswer, correct_nAnswer, a, b, c, x1, x2, correct_x1, correct_x2)) {
-        printf("Test %ld: WA a = %.17g, b = %.17g, c = %.17g\n", test_number, a, b, c);
+    if(!is_answer_correct(eq, eq_correct)) {
+        printf("Test %ld: WA a = %.17g, b = %.17g, c = %.17g\n", test_number, eq.a, eq.b, eq.c);
     } else {
         printf("Test %ld: OK\n", test_number);
     }
@@ -507,13 +577,19 @@ void test(const double a, const double b, const double c,
 
 
 void test_all() {
-    test(1.0, 2.0, 1.0, 1, -1.0, 0.0, 1);
-    test(1.0, -5.0, 6.0, 2, 2.0, 3.0, 2);
-    test(1.0, 5.0, 6.0, 2, -2.0, -3.0, 3);
-    test(1.0, 2.0, 5.0, 0, 0.0, 0.0, 4);
-    test(1.0, 0.0, -1.0, 2, -1.0, 1.0, 5);
-    test(0.0, 2.0, 2.0, 1, -1.0, 0.0, 6);
-    test(1.0, 1.0, 0.0, 2, 0.0, -1.0, 7);
+
+    equation_info tasks[7] = {
+        {1.0, 2.0, 1.0, SOLUTIONS_ONE, -1.0, 0.0},
+        {1.0, -5.0, 6.0, SOLUTIONS_TWO, 2.0, 3.0},
+        {1.0, 5.0, 6.0, SOLUTIONS_TWO, -2.0, -3.0},
+        {1.0, 2.0, 5.0, SOLUTIONS_ZERO, 0.0, 0.0},
+        {1.0, 0.0, -1.0, SOLUTIONS_TWO, -1.0, 1.0},
+        {0.0, 2.0, 2.0, SOLUTIONS_ONE, -1.0, 0.0},
+        {1.0, 1.0, 0.0, SOLUTIONS_TWO, 0.0, -1.0}};
+
+    for (int i = 0; i < sizeof(tasks) / sizeof(equation_info); i++) {
+        test(tasks[i], i + 1);
+    }
 }
 
 
@@ -525,18 +601,14 @@ void test_all() {
  * 
 */
 void solver() {
-    double a = 0.0, b = 0.0, c = 0.0;
-    
-    if(!input_from_term(&a, &b, &c)) return ;
+    equation_info eq;
+    if(!input_from_term(&eq)) return ;
 
-    normalize_pow2(&a, &b, &c);
+    //normalize_pow2(&a, &b, &c);
 
-    type_of_answer nAnswer = SOLUTIONS_INF;
-    double x1 = 0.0, x2 = 0.0;
+    equation_solve(&eq);
 
-    equation_solve(a, b, c, &nAnswer, &x1, &x2);
-
-    print_answer(nAnswer, x1, x2);
+    print_answer(eq);
 }
 
 int main() {
@@ -566,4 +638,4 @@ int main() {
         printf("Следующее?\n");
         scanf(" %c", &flag);
     }
-}
+} 
