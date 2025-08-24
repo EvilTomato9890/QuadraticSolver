@@ -3,7 +3,7 @@
 #include <math.h>
 #include <float.h>
 #include <assert.h>
-
+#include <string.h>
 
 const int EMAX = (DBL_MAX_EXP - 1);                  // 1023 
 const int EMIN = (DBL_MIN_EXP - DBL_MANT_DIG);       // -1074 
@@ -104,7 +104,7 @@ struct equation_info;
 bool is_answer_correct(equation_info eq, equation_info eq_correct);
 void normalize_pow2(equation_info *eq);
 bool input_from_term(equation_info *eq);
-bool input_from_file(equation_info *eq, FILE *curr_file);
+bool input_from_file(equation_info *eq, char *curr_file);
 bool try_linear_solve(equation_info *eq);
 void equation_solve(equation_info *eq);
 void print_answer(equation_info eq);
@@ -112,10 +112,13 @@ void solver();
 void test(equation_info eq, const long int test_number);
 int cmp_to_zero(double a);
 bool discard_line_and_check_from_term();
-bool discard_line_and_check_from_file(char *curr_file) ;
+bool discard_line_and_check_from_file(char *curr_file);
 bool is_float_correct(double a);
 void tester();
-
+int cmp_for_double(const double a, const double b);
+void tester(char *curr_file, const long int test_number);
+void test_all();
+char* open_file(char *file_name);
 
 struct equation_info {
     double a = 0.0, b = 0.0, c = 0.0;
@@ -198,7 +201,7 @@ bool is_float_correct(const double a) {
     return true;
 }
 
-
+/*
 void normalize_pow2(double *a, double *b, double *c) {
 
     hard_assert(a != nullptr, "a is nullptr");
@@ -247,7 +250,7 @@ void normalize_pow2(double *a, double *b, double *c) {
     *b = scalbn(*b, t);
     *c = scalbn(*c, t);
 }
-
+*/
 bool is_answer_correct(equation_info eq, equation_info eq_correct) {
     if (cmp_for_double(eq.nAnswer, eq_correct.nAnswer) == 0 and 
        ((cmp_for_double(eq_correct.x1, eq.x1) == 0 and cmp_for_double(eq_correct.x2, eq.x2) == 0) or
@@ -288,11 +291,10 @@ bool discard_line_and_check_from_term() {
 bool discard_line_and_check_from_file(char *curr_file) {
     int ch = 0;
     bool flag = 0;
-
-//Большие буквы или нижние подчеркивания
+    //Как не выйти за пределы строки
     hard_assert(curr_file != nullptr, "File doesn`t found");
 
-    while ((ch = *(curr_file++)) != '\n' && ch != EOF) {
+    while ((ch = *(curr_file++)) != '\n' && ch != EOF && ch != '\r') {
         if (ch != ' ' && ch != '\t') flag = 1; // K&R priloJILenie B (is...)
     }
     if (flag) return false;
@@ -314,8 +316,7 @@ bool input_from_term(equation_info *eq) {
     printf("Введите коэффициенты:\n");
     if (scanf("%lf %lf %lf", &eq->a, &eq->b, &eq->c) != 3 || 
         !isfinite(eq->a) || !isfinite(eq->b) || !isfinite(eq->c) || !discard_line_and_check_from_term()) {
-        printf("Неверный ввод\n");
-        return false;
+        soft_assert_functional(false, "Incorrect input", return false);
     }
     return true;
 }
@@ -358,7 +359,7 @@ bool input_from_file_legacy(equation_info *eq, FILE *curr_file) {
             eq->nAnswer = SOLUTIONS_TWO;
             break;
         default:
-            soft_assert_functional(false, "Inccorect nAnswer", return false);
+            soft_assert_functional(false, "Incorrect nAnswer", return false);
             break;
     }
     switch(eq->nAnswer) {
@@ -395,25 +396,22 @@ bool input_from_file_legacy(equation_info *eq, FILE *curr_file) {
     return true;
 }
 */
-bool input_from_file(equation_info *eq, FILE *curr_file) {
+bool input_from_file(equation_info *eq, char *curr_file) {
     hard_assert(eq != nullptr, "eq is nullptr");
     hard_assert(curr_file != nullptr, "File doesn`t found");
 
-    char *buffer = 0;
-    fseek (curr_file, 0, SEEK_END);
-    long int length = ftell(curr_file);
-    fseek (curr_file, 0, SEEK_SET);
-    buffer = (char *)malloc (length * sizeof(char));
-    hard_assert(!buffer, "Memory allocation failed ");
 
-    fread(buffer, 1, length, curr_file);
 
     int nAnswerInt = 0;
-    if (sscanf(buffer, "%lf %lf %lf %i", &eq->a, &eq->b, &eq->c, &nAnswerInt) != 4 || 
+    int length = 0;
+    int result_of_input = 0;
+
+    if (sscanf(curr_file, "%lf %lf %lf %i%n", &eq->a, &eq->b, &eq->c, &nAnswerInt, &length) != 4 || 
         !isfinite(eq->a) || !isfinite(eq->b) || !isfinite(eq->c)) {
-        printf("Неверный ввод\n");
-        return false;
+        soft_assert_functional(false, "Incorrect input", return false);
     }
+    curr_file += length;
+    length = 0;
     //Заменить свич на прямой каст
     switch(nAnswerInt) {
         case -1:
@@ -429,34 +427,36 @@ bool input_from_file(equation_info *eq, FILE *curr_file) {
             eq->nAnswer = SOLUTIONS_TWO;
             break;
         default:
-            soft_assert_functional(false, "Inccorect nAnswer", return false);
+            soft_assert_functional(false, "Incorrect nAnswer", return false);
             break;
     }
     switch(eq->nAnswer) {
         case SOLUTIONS_ZERO:
-            if (!discard_line_and_check_from_file(buffer)) {
-                printf("Неверный ввод\n");
-                return false;
+            if (!discard_line_and_check_from_file(curr_file)) {
+                soft_assert_functional(false, "Incorrect input", return false);
             }
             break;
         case SOLUTIONS_ONE:
-            if (fscanf(curr_file, "%lf", &eq->x1) != 1 || 
-                !isfinite(eq->x1) || !discard_line_and_check_from_file(buffer)) {
-                printf("Неверный ввод\n");
-                return false;
+            result_of_input = sscanf(curr_file, "%lf%n", &eq->x1, &length);
+            curr_file += length;
+            length = 0;
+            if (result_of_input != 1 || 
+                !isfinite(eq->x1) || !discard_line_and_check_from_file(curr_file)) {
+                soft_assert_functional(false, "Incorrect input", return false);
             }
             break;
         case SOLUTIONS_TWO:
-            if (fscanf(curr_file, "%lf %lf", &eq->x1, &eq->x2) != 2 || 
-                !isfinite(eq->x1) || !isfinite(eq->x2) || !discard_line_and_check_from_file(buffer)) {
-                printf("Неверный ввод\n");
-                return false;
+            result_of_input = sscanf(curr_file, "%lf %lf%n", &eq->x1, &eq->x2, &length);
+            curr_file += length;
+            length = 0;
+            if (result_of_input != 2 || 
+                !isfinite(eq->x1) || !isfinite(eq->x2) || !discard_line_and_check_from_file(curr_file)) {
+                soft_assert_functional(false, "Incorrect input", return false);
             }
             break;
         case SOLUTIONS_INF:
-            if (!discard_line_and_check_from_file(buffer)) {
-                printf("Неверный ввод\n");
-                return false;
+            if (!discard_line_and_check_from_file(curr_file)) {
+                soft_assert_functional(false, "Incorrect input", return false);
             }
             break;
         default:
@@ -467,7 +467,7 @@ bool input_from_file(equation_info *eq, FILE *curr_file) {
 
 }
 
-
+//bool new_sscanf(char **curr_file, const char *format)
 
 //---------------------------------------------------------------------------
 
@@ -544,11 +544,13 @@ void equation_solve(equation_info *eq) {
     }
 }
 
-void tester(FILE* file_pointer, const long int test_number) {
+void tester(char *curr_file, const long int test_number) {
 
     equation_info eq_correct;
 
-    input_from_file(&eq_correct, file_pointer);
+    if (!input_from_file(&eq_correct, curr_file)) {
+        printf("Test %ld: RE\n", test_number);
+    }
 
     equation_info eq;
     eq.a = eq_correct.a;
@@ -563,8 +565,7 @@ void tester(FILE* file_pointer, const long int test_number) {
     }
 }
 
-void test(equation_info eq_correct,
-          const long int test_number) {
+void test(equation_info eq_correct, const long int test_number) {
     equation_info eq = {eq_correct.a, eq_correct.b, eq_correct.c};
     equation_solve(&eq);
 
@@ -592,7 +593,22 @@ void test_all() {
     }
 }
 
+char* open_file(char *file_name) {
 
+    FILE *curr_file = fopen(file_name, "r");
+    hard_assert(curr_file != nullptr, "File doesn`t found");
+
+    char *buffer = 0;
+    fseek (curr_file, 0, SEEK_END);
+    long int length = ftell(curr_file);
+    fseek (curr_file, 0, SEEK_SET);
+
+    buffer = (char *)malloc (length * sizeof(char));
+    hard_assert(buffer, "Memory allocation failed ");
+
+    fread(buffer, 1, length, curr_file);
+    return buffer;
+}
 /**
  * @brief Функция, обрабатывающая 1 уравнение
  * 
@@ -611,31 +627,40 @@ void solver() {
     print_answer(eq);
 }
 
-int main() {
-    printf("Введите имя файла:\n");
+int main(int argc, char *argv[]) {
+    hard_assert(argc == 2, "Incorrect num of args");
 
-    char file_name[100];
-    scanf("%s", file_name);
+    if (!strcmp(argv[1], "--interactive")) {
+        printf("Если хотите решить следующее уравнение - нажмите y\n");
+        char flag = 'y';
+        while (flag == 'y') {
+            solver();
+            printf("Следующее?\n");
+            scanf(" %c", &flag);
+        }
+    } else if (!strcmp(argv[1], "--test")) {
+        
+        printf("Введите имя файла:\n");
 
-    FILE *file_pointer = fopen(file_name, "r");
-    hard_assert(file_pointer != nullptr, "File doesn`t found");
-    long num_of_tests = 0;
-    fscanf(file_pointer,"%ld", &num_of_tests);
+        char file_name[100];
+        scanf("%s", file_name);
+        char *curr_file = open_file(file_name);
+
+        long num_of_tests = 0;
+        int length = 0;
+        if(sscanf(curr_file, "%ld%n", &num_of_tests, &length) != 1) { 
+            hard_assert(false, "Incorrect reading");
+        }
+        curr_file += length;
 
 
-    long int test_number = 1;
-    for(int i = 0; i < num_of_tests; i++) {
-        tester(file_pointer, test_number);
-        test_number++;
-
+        long int test_number = 1;
+        for(int i = 0; i < num_of_tests; i++) {
+            tester(curr_file, test_number);
+            test_number++;
+        }
+        //test_all();
+    } else {
+        hard_assert(false, "Unknown args");
     }
-    test_all();
-
-    printf("Если хотите решить следующее уравнение - нажмите y\n");
-    char flag = 'y';
-    while (flag == 'y') {
-        solver();
-        printf("Следующее?\n");
-        scanf(" %c", &flag);
-    }
-} 
+}
