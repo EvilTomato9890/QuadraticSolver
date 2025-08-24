@@ -627,20 +627,17 @@ void solver() {
     print_answer(eq);
 }
 
-int main(int argc, char *argv[]) {
-    hard_assert(argc == 2, "Incorrect num of args");
-
-    if (!strcmp(argv[1], "--interactive")) {
-        printf("Если хотите решить следующее уравнение - нажмите y\n");
+void solver_from_interactive_input() {
+    printf("Если хотите решить следующее уравнение - нажмите y\n");
         char flag = 'y';
         while (flag == 'y') {
             solver();
             printf("Следующее?\n");
             scanf(" %c", &flag);
-        }
-    } else if (!strcmp(argv[1], "--test")) {
-        
-        printf("Введите имя файла:\n");
+}
+
+void solver_from_test_input() {
+    printf("Введите имя файла:\n");
 
         char file_name[100];
         scanf("%s", file_name);
@@ -659,6 +656,16 @@ int main(int argc, char *argv[]) {
             tester(curr_file, test_number);
             test_number++;
         }
+}
+
+
+int main(int argc, char *argv[]) {
+    hard_assert(argc == 2, "Incorrect num of args");
+
+    if (!strcmp(argv[1], "--interactive")) {
+        solver_from_interactive_input();
+    } else if (!strcmp(argv[1], "--test")) {
+        solver_from_test_input();
         //test_all();
     } else {
         hard_assert(false, "Unknown args");
