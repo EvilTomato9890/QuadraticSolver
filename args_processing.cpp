@@ -20,11 +20,11 @@ void solver_from_interactive_input() {
 void solver_from_test_input() {
     printf("Введите имя файла:\n");
 
-    char file_name[100];
-    scanf("%s", file_name);
+    char file_name[100] = {};
+    scanf("%s", file_name) // TODO: проверка ввода
     int length = 0;
     
-    char *curr_file = open_file(file_name);
+    char *curr_file = open_file(file_name); // ассертик бы или проверку
 
     long num_of_tests = calculate_num_of_strings(curr_file);
 
@@ -35,6 +35,8 @@ void solver_from_test_input() {
         tester(curr_file, test_number);
         test_number++;
     }
+
+    free(curr_file);
 }
 
 void help_info(const char *arg, const argument *args, const int lentgh_of_args) {
@@ -46,21 +48,21 @@ void help_info(const char *arg, const argument *args, const int lentgh_of_args) 
 }
 
 type_of_call args_processing(char *argv[]) {
-    if (strcmp(argv[1], "--interactive") == 0 ||
-        strcmp(argv[1], "-i") == 0) {
+    if (strcmp(argv[1], "--interactive")  == 0 ||
+        strcmp(argv[1], "-i")             == 0) {
         return CALL_INTERACTIVE;
-    } else if (strcmp(argv[1], "--test") == 0 ||
-        strcmp(argv[1], "-t") == 0) {
+    } else if (strcmp(argv[1], "--test")  == 0 ||
+               strcmp(argv[1], "-t")      == 0) {
         return CALL_TEST;
-    } else if (strcmp(argv[1], "--help") == 0 ||
-        strcmp(argv[1], "-h") == 0) {
+    } else if (strcmp(argv[1], "--help")  == 0 ||
+               strcmp(argv[1], "-h")      == 0) {
         return CALL_HELP;
     } else if (strcmp(argv[1], "--prank") == 0 ||
-        strcmp(argv[1], "-p") == 0) {
+               strcmp(argv[1], "-p")      == 0) {
         return CALL_PRANK;
     } else {
-        return CALL_INCORRECT;
         incorrect_args(argv[0], argv[1]);
+        return CALL_INCORRECT;
     }
 }
 

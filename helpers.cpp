@@ -28,7 +28,7 @@ void print_answer(equation_info eq) {
         printf("Корней нет\n");
         return ;
     case SOLUTIONS_ONE:
-        printf("Единственный корень: %.17g\n", eq.x1);
+        printf("Единственный корень: %.17g\n", eq.x1); // to const
         return ;
     case SOLUTIONS_TWO:
         printf("Корня два: x1 = %.17g, x2 = %.17g\n", eq.x1, eq.x2);
@@ -136,5 +136,6 @@ bool is_answer_correct(equation_info eq, equation_info eq_correct) {
         (cmp_for_double(eq_correct.x1, eq.x2) == 0 and cmp_for_double(eq_correct.x2, eq.x1) == 0))) {
         return true;
     }
+
     return false;
 }

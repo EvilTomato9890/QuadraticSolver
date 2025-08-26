@@ -12,7 +12,6 @@
     } while (0)
 
 
-
 void solver_from_interactive_input();
 
 void solver_from_test_input();

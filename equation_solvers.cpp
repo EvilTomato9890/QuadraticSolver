@@ -23,7 +23,6 @@ bool try_linear_solve(equation_info *eq) {
     soft_assert(is_float_correct(eq->b), "b is NAN"); 
     soft_assert(is_float_correct(eq->c), "c is NAN"); 
 
-
     if (cmp_to_zero(a) == 0) {
         if (cmp_to_zero(b) == 0) {
             if (cmp_to_zero(c) == 0) eq->nAnswer = SOLUTIONS_INF;
@@ -53,7 +52,7 @@ void equation_solve(equation_info *eq) {
 
     const double a = eq->a, b = eq->b, c = eq->c;
     if(try_linear_solve(eq)) {
-        return ;
+        return;
     }
 
     double D = b * b - 4.0 * a * c;
@@ -85,8 +84,8 @@ void equation_solve(equation_info *eq) {
  * 
 */
 void solver() { //Как назвать
-    equation_info eq;
-    if(!input_from_term(&eq)) return ;
+    equation_info eq = {};
+    if(!input_from_term(&eq)) return;
     //normalize_pow2(&a, &b, &c);
     equation_solve(&eq);
     print_answer(eq);
