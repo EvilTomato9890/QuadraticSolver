@@ -13,6 +13,7 @@ enum type_of_call {
     CALL_INTERACTIVE,
     CALL_TEST,
     CALL_HELP,
+    CALL_PRANK,
     CALL_INCORRECT
 };
 

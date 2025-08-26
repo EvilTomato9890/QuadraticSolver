@@ -24,7 +24,17 @@ bool input_from_term(equation_info *eq) {
     return true;
 }
 
-
+int calculate_num_of_strings(char *curr_file) {
+    hard_assert(curr_file != nullptr, "Cannot find file");
+    int length = 0, num_of_tests = 0;
+    while(*curr_file != '\0') {
+        sscanf(curr_file, "%*[^\n]%*c%n", &length);
+        num_of_tests++;
+        curr_file += length;
+        length = 0;
+    }
+    return num_of_tests;
+}
 char* open_file(char *file_name) {
 
     FILE *curr_file = fopen(file_name, "r");
@@ -59,12 +69,12 @@ bool input_from_file(equation_info *eq, char *curr_file) {
 
     int nAnswerInt = 0;
     int length = 0;
-    int result_of_input = 0;
 
     if (sscanf(curr_file, "%lf %lf %lf %d %lf %lf%n", &eq->a, &eq->b, &eq->c, &nAnswerInt, &eq->x1, &eq->x2, &length) != 6 || 
         !isfinite(eq->a) || !isfinite(eq->b) || !isfinite(eq->c) || !isfinite(eq->x1) || !isfinite(eq->x2)) {
         soft_assert_functional(false, "Incorrect input", return false);
     }
+    //Указатель же меняется
     curr_file += length;
     length = 0;
     if (!discard_line_and_check_from_file(curr_file)) {

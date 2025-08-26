@@ -21,7 +21,7 @@ void help_info(const char *arg, const argument *args, const int lentgh_of_args);
 
 type_of_call args_processing(char *argv[]);
 
-
+void prank();
 
 
 #endif

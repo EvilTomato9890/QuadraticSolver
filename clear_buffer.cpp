@@ -1,6 +1,7 @@
 #include "clear_buffer.h"
 #include "asserts.h"
 #include <stdio.h>
+#include <ctype.h>
 /**
  * @brief Функция, очищающая буфер ввода консоли и проверяющая его "пустоту".
  * @param [out] a Первый коэффицент.
@@ -29,13 +30,13 @@ bool discard_line_and_check_from_term() {
 */
 bool discard_line_and_check_from_file(char *curr_file) {
     int ch = 0;
-    bool flag = 0;
+    bool is_test_correct = 1;
     //Как не выйти за пределы строки
     hard_assert(curr_file != nullptr, "File doesn`t found");
 
-    while ((ch = *(curr_file++)) != '\n' && ch != EOF && ch != '\r') {
-        if (ch != ' ' && ch != '\t') flag = 1; // K&R priloJILenie B (is...)
+    while (!iscntrl(ch = *(curr_file++))) {
+        if (!isblank(ch)) is_test_correct = 0; 
     }
-    if (flag) return false;
+    if (!is_test_correct) return false;
     return true; 
 }

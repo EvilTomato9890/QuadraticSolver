@@ -6,6 +6,9 @@
 #include "test_part.h"
 #include <stdio.h>
 
+#define RED   "\033[1;31m"
+#define GREEN "\033[32m"
+#define RESET "\033[0m"
 void tester(char *curr_file, const long int test_number) {
 
     equation_info eq_correct;
@@ -22,9 +25,9 @@ void tester(char *curr_file, const long int test_number) {
     equation_solve(&eq);
 
     if(!is_answer_correct(eq, eq_correct)) {
-        printf("Test %ld: WA a = %.17g, b = %.17g, c = %.17g\n", test_number, eq.a, eq.b, eq.c);
+        printf("Test %ld:" RED "WA a = %.17g, b = %.17g, c = %.17g\n" RESET, test_number, eq.a, eq.b, eq.c);
     } else {
-        printf("Test %ld: OK\n", test_number);
+        printf("Test %ld: " GREEN "OK\n" RESET, test_number);
     }
 }
 

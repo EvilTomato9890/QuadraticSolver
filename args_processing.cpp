@@ -22,13 +22,12 @@ void solver_from_test_input() {
 
     char file_name[100];
     scanf("%s", file_name);
+    int length = 0;
+    
     char *curr_file = open_file(file_name);
 
-    long num_of_tests = 0;
-    int length = 0;
-    if(sscanf(curr_file, "%ld%n", &num_of_tests, &length) != 1) { 
-        hard_assert(false, "Incorrect reading");
-    }
+    long num_of_tests = calculate_num_of_strings(curr_file);
+
     curr_file += length;
 
     long int test_number = 1;
@@ -56,8 +55,15 @@ type_of_call args_processing(char *argv[]) {
     } else if (strcmp(argv[1], "--help") == 0 ||
         strcmp(argv[1], "-h") == 0) {
         return CALL_HELP;
+    } else if (strcmp(argv[1], "--prank") == 0 ||
+        strcmp(argv[1], "-p") == 0) {
+        return CALL_PRANK;
     } else {
         return CALL_INCORRECT;
         incorrect_args(argv[0], argv[1]);
     }
+}
+
+void prank() {
+    printf("No one loves you\n");
 }
