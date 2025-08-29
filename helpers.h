@@ -3,7 +3,7 @@
 
 #include "structers.h"
 
-void print_answer(equation_info eq);
+void print_answer(const equation_info eq);
 
 int cmp_to_zero(const double a);
 
@@ -11,6 +11,6 @@ int cmp_for_double(const double a, const double b);
 
 bool is_float_correct(const double a);
 
-bool is_answer_correct(equation_info eq, equation_info eq_correct);
+bool is_answer_correct(const equation_info eq, const equation_info eq_correct);
 
 #endif

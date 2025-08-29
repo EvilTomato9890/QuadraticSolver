@@ -10,24 +10,30 @@ enum type_of_answer {
 };
 
 enum type_of_call {
-    CALL_INTERACTIVE,
-    CALL_TEST,
-    CALL_HELP,
-    CALL_PRANK,
-    CALL_INCORRECT
+    CALL_INTERACTIVE, ///< Вызов с вводом с консоли
+    CALL_TEST, ///< Вызов с проверкой тестов из файла
+    CALL_HELP, ///< Вызов с выводом всех вохможных аргументов вызова
+    CALL_PRANK, ///< uwu
+    CALL_INCORRECT /// Некоректный тип вызова
 };
 
+enum type_of_log {
+    DEBUG,
+    INFO,
+    WARNING,
+    ERROR
+}; 
 
 struct equation_info {
-    double a = 0.0, b = 0.0, c = 0.0;
-    type_of_answer nAnswer = SOLUTIONS_INF;
-    double x1 = 0.0, x2 = 0.0;    
+    double a = 0.0, b = 0.0, c = 0.0; ///< Коэффиценты уравнения
+    type_of_answer nAnswer = SOLUTIONS_INF; ///< Количество решений уравнения
+    double x1 = 0.0, x2 = 0.0; ///< Корни уравнения
 };
 
 struct argument {
-    const char* short_option;
-    const char* long_option;
-    const char* description;
+    const char* short_option; ///< Длинная запись аргумента
+    const char* long_option; ///< Короткая запись аргумента
+    const char* description; ///< Описание аргумента
 };
 
 
