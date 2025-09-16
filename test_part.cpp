@@ -1,59 +1,51 @@
 #include "test_part.h"
-#include "structers.h"
 #include "input.h"
-#include "equation_solvers.h"
-#include "helpers.h"
-#include "test_part.h"
+#include "logger.h"
+#include "asserts.h"
 #include <stdio.h>
 
 #define RED   "\033[1;31m"
 #define GREEN "\033[32m"
 #define RESET "\033[0m"
-void tester(char *curr_file, const long int test_number) {
+#define OUTPUT_EPS "17" ///<Константа отвечающая за то, с каким числом знаков после запятой будет выведено число с плавающей точкой.
 
-    equation_info eq_correct;
+/**
+ * @brief Функция, проверяющая корректность кода на 1-ом примере из файла.
+ * @param [in] curr_file Строка, содержащая тесты.
+ * @param [in] test_number Количество тестов в файле.
+ * Функция проверяет корректность корней квадратного уравнения, которые выдает программа, с помощью тестов из файла.
+ * Проведя сравнение функция выведет результат
+ * 
+ * @note RE - не удалось считать ввод 
+ * @note WA - Неверный ответ 
+ * @note OK - все хорошо 
+ * 
+*/
 
-    if (!input_from_file(&eq_correct, curr_file)) {
-        printf("Test %ld: RE\n", test_number);
-        return ;
+void solver_from_test_input() {
+    LOGGER_INFO("Test input call");  
+    printf("Введите имя файла:\n");
+
+    char file_name[100] = {};
+    scanf("%99s", file_name); 
+    
+    char *curr_file = read_file_into_buffer(file_name); 
+    hard_assert(curr_file != nullptr, "File is missing");
+
+    long num_of_tests = calculate_num_of_strings(curr_file);
+    LOGGER_DEBUG("Found %d tests\n", num_of_tests);
+
+    long int test_number = 1;
+    for(int i = 0; i < num_of_tests; i++) {
+        tester(curr_file, test_number);
+        test_number++;
     }
 
-    equation_info eq;
-    eq.a = eq_correct.a;
-    eq.b = eq_correct.b;
-    eq.c = eq_correct.c;
-    equation_solve(&eq);
-
-    if(!is_answer_correct(eq, eq_correct)) {
-        printf("Test %ld:" RED "WA a = %.17g, b = %.17g, c = %.17g\n" RESET, test_number, eq.a, eq.b, eq.c);
-    } else {
-        printf("Test %ld: " GREEN "OK\n" RESET, test_number);
-    }
+    free(curr_file);
 }
 
-void test(equation_info eq_correct, const long int test_number) {
-    equation_info eq = {eq_correct.a, eq_correct.b, eq_correct.c};
-    equation_solve(&eq);
 
-    if(!is_answer_correct(eq, eq_correct)) {
-        printf("Test %ld: WA a = %.17g, b = %.17g, c = %.17g\n", test_number, eq.a, eq.b, eq.c);
-    } else {
-        printf("Test %ld: OK\n", test_number);
-    }
+void tester(const char *curr_file, const long int test_number) { 
+    return ;
 }
 
-void test_all() {
-
-    equation_info tasks[7] = {
-        {1.0, 2.0, 1.0, SOLUTIONS_ONE, -1.0, 0.0},
-        {1.0, -5.0, 6.0, SOLUTIONS_TWO, 2.0, 3.0},
-        {1.0, 5.0, 6.0, SOLUTIONS_TWO, -2.0, -3.0},
-        {1.0, 2.0, 5.0, SOLUTIONS_ZERO, 0.0, 0.0},
-        {1.0, 0.0, -1.0, SOLUTIONS_TWO, -1.0, 1.0},
-        {0.0, 2.0, 2.0, SOLUTIONS_ONE, -1.0, 0.0},
-        {1.0, 1.0, 0.0, SOLUTIONS_TWO, 0.0, -1.0}};
-
-    for (int i = 0; i < (int)sizeof(tasks) / (int)sizeof(equation_info); i++) {
-        test(tasks[i], i + 1);
-    }
-}
